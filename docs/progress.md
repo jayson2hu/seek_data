@@ -43,3 +43,9 @@
 - Status: done
 - Evidence: `l1_data_processing.text.clean_normalize_text`, `clean_normalize_node`, and `tests/test_clean_normalize.py`.
 - Acceptance: HTML tags/entities and extra whitespace are normalized; graph state records character, word, and paragraph counts.
+
+### F3.2 Initial Filter Node
+
+- Status: done
+- Evidence: `filter_node`, `ContentFilter` FakeLLM preset support, and `tests/test_filter_node.py`.
+- Acceptance: obvious low-quality/marketing content can be marked `CANCELLED`; cancelled state short-circuits expensive base analysis and embedding nodes.

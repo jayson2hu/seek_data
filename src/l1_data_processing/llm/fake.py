@@ -28,7 +28,11 @@ class FakeLLM:
             "entities": ["L1"],
             "base_tags": ["data-processing", "standalone"],
         }
-        data = self.preset_responses.get(schema_name, default)
+        defaults_by_schema: dict[str, dict[str, Any]] = {
+            "BaseAnalysis": default,
+            "ContentFilter": {"ignore": False, "reason": "", "value": "normal"},
+        }
+        data = self.preset_responses.get(schema_name, defaults_by_schema.get(schema_name, default))
         return LLMResponse(
             text="",
             data=data,

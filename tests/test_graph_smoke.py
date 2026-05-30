@@ -16,6 +16,6 @@ def test_run_enrichment_with_stub_and_fake_llm() -> None:
     assert analysis.summary
     assert analysis.key_points
     assert len(analysis.embedding) == 8
-    assert [trace.node for trace in analysis.traces] == ["base_analysis", "embedding"]
-    assert llm.calls["structured"] == 1
+    assert [trace.node for trace in analysis.traces] == ["filter", "base_analysis", "embedding"]
+    assert llm.calls["structured"] == 2
     assert llm.calls["embed"] == 1

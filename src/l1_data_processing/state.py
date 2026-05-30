@@ -21,6 +21,7 @@ class GraphState:
     traces: list[UsageTrace] = field(default_factory=list)
     analysis: BaseAnalysis | None = None
     status: str = "PENDING"
+    cancel_reason: str | None = None
 
     def add_trace(self, trace: UsageTrace) -> None:
         self.traces.append(trace)
@@ -49,4 +50,5 @@ class GraphState:
             "traces": [trace.to_dict() for trace in self.traces],
             "analysis": self.analysis.to_dict() if self.analysis else None,
             "status": self.status,
+            "cancel_reason": self.cancel_reason,
         }

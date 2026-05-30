@@ -29,6 +29,39 @@ def clean_normalize_node(state: GraphState) -> GraphState:
     return state
 
 
+def filter_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
+    if not state.text:
+        raise ValueError("text must be present before filter")
+
+    started = perf_counter()
+    filter_model = router.model_for("cheap")
+    response = llm.structured(
+        "Judge whether this content is low-quality or marketing-only. "
+        "Return {ignore, reason, value}.\n\n"
+        f"{state.text}",
+        schema_name="ContentFilter",
+        model=filter_model,
+    )
+    result = response.data
+    state.intermediate["filter"] = result
+    state.add_trace(
+        UsageTrace(
+            node="filter",
+            model=filter_model,
+            prompt_tokens=response.prompt_tokens,
+            completion_tokens=response.completion_tokens,
+            elapsed_ms=int((perf_counter() - started) * 1000),
+        )
+    )
+
+    if bool(result.get("ignore")):
+        state.status = "CANCELLED"
+        state.cancel_reason = str(result.get("reason", "filtered"))
+    else:
+        state.status = "FILTER_PASSED"
+    return state
+
+
 def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
     if state.content is None or not state.text:
         raise ValueError("content must be loaded before base analysis")
@@ -105,6 +138,9 @@ def enrich(content_id: str, *, provider: ContentProvider, llm: LLMClient, router
     state = GraphState(content_id=content_id)
     state = load_content_node(state, provider=provider)
     state = clean_normalize_node(state)
+    state = filter_node(state, llm=llm, router=router)
+    if state.status == "CANCELLED":
+        return state
     state = base_analysis_node(state, llm=llm, router=router)
     state = embedding_node(state, llm=llm, router=router)
     return persist_placeholder_node(state)
@@ -113,5 +149,5 @@ def enrich(content_id: str, *, provider: ContentProvider, llm: LLMClient, router
 def run_enrichment(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> BaseAnalysis:
     state = enrich(content_id, provider=provider, llm=llm, router=router)
     if state.analysis is None:
-        raise ValueError("enrichment finished without analysis")
+        raise ValueError(f"enrichment finished without analysis: status={state.status}")
     return state.analysis
