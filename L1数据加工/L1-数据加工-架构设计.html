@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1 数据加工 · 架构设计</title>
+<style>
+  :root{--bg:#07140f;--panel:#0e1f18;--panel2:#152b22;--line:#1d3b2e;--text:#e6f5ee;--muted:#92b8a8;--dim:#5f8a76;--acc:#34d399;--acc2:#6ee7b7;--blue:#60a5fa;--amber:#fbbf24;--rose:#fb7185;--violet:#a78bfa;--ye:#fcd34d}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(900px 480px at 82% -12%,rgba(52,211,153,.08),transparent),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7;font-size:15px}
+  a{color:var(--acc)}.wrap{display:grid;grid-template-columns:244px 1fr;max-width:1320px;margin:0 auto}
+  nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 14px;border-right:1px solid var(--line);background:rgba(7,20,15,.72)}
+  nav .bk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;color:#04140d;background:var(--acc);padding:3px 9px;border-radius:6px;margin-bottom:8px}
+  nav .brand{font-weight:800;font-size:15px}nav .sub{color:var(--dim);font-size:11px;margin-bottom:14px}
+  nav a{display:block;color:var(--muted);padding:5.5px 11px;border-radius:8px;font-size:12.5px}nav a:hover{background:var(--panel);color:var(--text);text-decoration:none}
+  main{padding:38px 50px 110px;min-width:0}
+  .tag{display:inline-block;background:rgba(52,211,153,.13);color:var(--acc);border:1px solid rgba(52,211,153,.32);padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+  h1{font-size:28px;line-height:1.25;margin:0 0 10px;font-weight:800}h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:var(--muted);font-size:15.5px;max-width:820px}
+  section{margin:36px 0;scroll-margin-top:14px}
+  h2{font-size:20px;margin:0 0 6px;font-weight:800;display:flex;align-items:center;gap:10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  h2 .x{background:linear-gradient(135deg,var(--acc),#0d9488);color:#04140d;width:25px;height:25px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;flex-shrink:0}
+  h3{font-size:15px;margin:18px 0 7px;color:#fff}.note{color:var(--dim);font-size:12.5px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .mini{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px}.mini h4{margin:0 0 5px;font-size:13.6px;color:#fff}.mini p{margin:0;color:var(--muted);font-size:12.2px}.mini .ic{font-size:17px;margin-bottom:4px;display:block}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.4px;border-radius:10px;overflow:hidden}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel2);color:#fff;font-weight:700}td{color:var(--muted)}tr:last-child td{border-bottom:none}td strong{color:var(--text)}
+  .hl{color:var(--acc);font-weight:700}
+  pre{background:#051009;border:1px solid var(--line);border-radius:11px;padding:14px 16px;overflow-x:auto;font-size:11.8px;line-height:1.55;color:#bdd9cc;margin:12px 0}
+  pre .c{color:#557a68}pre .gr{color:#6ee7b7}pre .bl{color:#93c5fd}pre .ye{color:#fcd34d}pre .vi{color:#c4b5fd}
+  code{background:var(--panel2);padding:1.5px 6px;border-radius:5px;font-size:12px;color:var(--violet);font-family:Consolas,monospace}
+  ul.clean{margin:8px 0;padding-left:19px}ul.clean li{margin:4px 0;color:var(--muted)}ul.clean li strong{color:var(--text)}
+  .callout{border-left:3px solid var(--acc);background:rgba(52,211,153,.07);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;color:var(--muted)}.callout.amber{border-color:var(--amber);background:rgba(251,191,36,.07)}.callout b{color:var(--text)}
+  .foot{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}main{padding:22px 15px 60px}.grid2,.grid3{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="bk">LAYER 1</span>
+    <div class="brand">数据加工</div>
+    <div class="sub">架构设计 · Enrichment</div>
+    <a href="#goal">① 设计目标</a>
+    <a href="#comp">② 组件</a>
+    <a href="#graph">③ LangGraph 分析图</a>
+    <a href="#model">④ 数据模型</a>
+    <a href="#tier">⑤ 模型分级与成本</a>
+    <a href="#cache">⑥ 缓存/幂等/重放</a>
+    <a href="#contract">⑦ 接口契约</a>
+    <a href="#tech">⑧ 技术选型</a>
+    <a href="#deploy">⑨ 部署</a>
+    <a href="#risk">⑩ 风险</a>
+  </nav>
+  <main>
+    <span class="tag">分层产品 2 / 4 · 架构设计</span>
+    <h1>L1 数据加工 — <em>架构设计</em></h1>
+    <p class="lede">用 LangGraph 把原始内容加工为结构化知识。核心是<b>一张可观测、可重试、可换模型的基础分析图</b>，加上严格的<b>成本分级</b>与<b>缓存/重放</b>机制。</p>
+
+    <section id="goal">
+      <h2><span class="x">1</span>设计目标</h2>
+      <div class="grid3">
+        <div class="mini"><span class="ic">💵</span><h4>低成本</h4><p>小模型初筛砍掉大头，再用中端模型深加工。</p></div>
+        <div class="mini"><span class="ic">🧩</span><h4>结构稳定</h4><p>产物 schema 对上层稳定，模型/prompt 可换。</p></div>
+        <div class="mini"><span class="ic">🔭</span><h4>可观测可调</h4><p>每节点输入输出留痕，便于调 prompt。</p></div>
+        <div class="mini"><span class="ic">♻️</span><h4>可重放</h4><p>响应 L0 reprocess，幂等重跑。</p></div>
+        <div class="mini"><span class="ic">🧱</span><h4>不阻塞</h4><p>失败可重试，不卡住整条管线。</p></div>
+        <div class="mini"><span class="ic">🚫</span><h4>垂直无关</h4><p>只做通用理解，不含业务判断。</p></div>
+      </div>
+    </section>
+
+    <section id="comp">
+      <h2><span class="x">2</span>组件</h2>
+      <pre><span class="c">content.ingested ──▶ enrichment-worker ──▶ LangGraph 基础分析图 ──▶ 写产物 ──▶ content.analyzed
+                          │                        │                      │
+                     队列消费(Arq)            模型路由/缓存          content_base_analysis
+                                                                    + embedding(pgvector)</span></pre>
+    </section>
+
+    <section id="graph">
+      <h2><span class="x">3</span>LangGraph 基础分析图</h2>
+      <pre><span class="gr">enrichment_graph (StateGraph)</span>
+state: {content_id, text, lang, partial...}
+
+  <span class="bl">clean_normalize</span>            <span class="c"># 去噪/分段/长度评估</span>
+       │
+  <span class="bl">filter</span> (cheap LLM)          <span class="c"># 低质/营销 → ignore=true → CANCELLED(短路)</span>
+       │ pass
+  <span class="bl">detect_lang</span>
+       │
+  ┌────┴─────────┐  branch by length
+  ▼              ▼
+ analyze_full   split ▶ map(<span class="bl">analyze_chunk</span>) ▶ <span class="bl">aggregate</span>   <span class="c"># 长文分段再聚合</span>
+  └──────┬───────┘
+  <span class="bl">extract</span>                     <span class="c"># one_liner/summary/key_points/quotes/entities (JSON 结构化输出)</span>
+       │
+  <span class="bl">embed</span>                       <span class="c"># title+summary → vector → pgvector</span>
+       │
+  <span class="bl">base_tag</span>                    <span class="c"># 通用主题/形式标签(与垂直无关)</span>
+       │
+  <span class="bl">persist</span> ▶ emit content.analyzed</pre>
+      <div class="callout"><b>为什么用图：</b>条件分支（长/短文）、map-reduce（分段聚合）、节点级重试与缓存、全链路 trace——这些正是 LangGraph 的强项，比一个大 prompt 可控得多。</div>
+    </section>
+
+    <section id="model">
+      <h2><span class="x">4</span>数据模型</h2>
+      <pre><span class="gr">content_base_analysis</span>(
+  content_id <span class="ye">PK FK</span>,
+  one_liner, summary, key_points jsonb, quotes jsonb,
+  entities jsonb, base_tags jsonb,
+  embedding <span class="ye">vector(1536)</span>,
+  model, graph_version,        <span class="c"># 记录用哪个模型/图版本 → 重放判断</span>
+  tokens_in, tokens_out, cost, created_at )
+
+<span class="gr">enrichment_cache</span>(            <span class="c"># 幂等/重放复用</span>
+  content_hash, graph_version, result_ref, created_at )</pre>
+      <p class="note">记录 <code>model</code> 与 <code>graph_version</code>：当图升级，可对比版本决定是否重跑；相同内容+相同版本直接命中缓存。</p>
+    </section>
+
+    <section id="tier">
+      <h2><span class="x">5</span>模型分级与成本</h2>
+      <table>
+        <thead><tr><th>节点</th><th>模型档</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>filter 初评</td><td><strong>小模型（便宜）</strong></td><td>剔除 60-70% 低质，避免昂贵深加工</td></tr>
+          <tr><td>analyze/extract</td><td><strong>中端模型</strong></td><td>质量与成本平衡</td></tr>
+          <tr><td>embed</td><td><strong>embedding 模型</strong></td><td>低成本向量化</td></tr>
+        </tbody>
+      </table>
+      <div class="callout amber"><b>成本是 L1 的头号约束。</b>三招降本：① 小模型初筛短路；② 只对通过初评的内容深加工；③ 缓存+重放复用。模型档位由 <code>ConfigKey</code> 配置，可随价格/质量变化切换。</div>
+    </section>
+
+    <section id="cache">
+      <h2><span class="x">6</span>缓存 / 幂等 / 重放</h2>
+      <ul class="clean">
+        <li><strong>幂等</strong>：以 <code>(content_hash, graph_version)</code> 为键；重复处理直接命中，不重复花钱。</li>
+        <li><strong>重放</strong>：收到 <code>content.reprocess</code> 或 graph_version 升级时，按范围重跑；旧产物可保留对比。</li>
+        <li><strong>失败处理</strong>：节点级重试（指数退避）；多次失败标记并跳过，不阻塞队列。</li>
+      </ul>
+    </section>
+
+    <section id="contract">
+      <h2><span class="x">7</span>接口契约</h2>
+      <pre><span class="c"># 输入事件</span>  content.ingested {content_id, lang}
+<span class="c"># 输出事件</span>  content.analyzed {content_id}
+<span class="c"># 产物</span>      content_base_analysis (供 L2/L3 只读)
+<span class="c"># 状态</span>      WAIT_FILTER → WAIT_ANALYSIS → WAIT_SCORE | CANCELLED</pre>
+    </section>
+
+    <section id="tech">
+      <h2><span class="x">8</span>技术选型</h2>
+      <table>
+        <tbody>
+          <tr><td>编排</td><td><strong>LangGraph</strong>（StateGraph、条件边、map、重试）</td></tr>
+          <tr><td>运行</td><td>Python · enrichment-worker（Arq/Celery 消费）</td></tr>
+          <tr><td>LLM</td><td>分级调用（小/中模型），统一 LLM 客户端封装 + 路由</td></tr>
+          <tr><td>向量</td><td>embedding 模型 → pgvector</td></tr>
+          <tr><td>可观测</td><td>LangSmith 或自建 trace（节点级）</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="deploy">
+      <h2><span class="x">9</span>部署</h2>
+      <p class="note">MVP：与其他 worker 合并为 <code>worker</code> 进程的一个 task 队列。规模化：独立 <code>enrichment-worker</code> 进程，按吞吐水平扩展；LLM 调用并发受限以控成本。</p>
+    </section>
+
+    <section id="risk">
+      <h2><span class="x">10</span>风险</h2>
+      <table>
+        <thead><tr><th>风险</th><th>应对</th></tr></thead>
+        <tbody>
+          <tr><td>LLM 成本超预算</td><td>小模型初筛 + 缓存 + 并发限流 + 用量告警</td></tr>
+          <tr><td>结构化输出不稳定</td><td>JSON schema 约束 + 校验 + 重试/降级</td></tr>
+          <tr><td>长文遗漏信息</td><td>分段 map-reduce 聚合</td></tr>
+          <tr><td>模型升级回归</td><td>graph_version 灰度 + 抽检对比</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><b>下一层：</b><code>content.analyzed</code> 驱动 <b>L2 判断与智能体</b>，见《L2 · 架构设计》。</div>
+    </section>
+
+    <div class="foot">L1 数据加工 · 架构设计 · CodePick 分层平台（2/4）· LangGraph 基础分析图 + 成本分级 · 2026-05-30</div>
+  </main>
+</div>
+</body>
+</html>

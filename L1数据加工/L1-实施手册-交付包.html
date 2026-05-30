@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1 数据加工 · 实施手册（交付包）</title>
+<style>
+  :root{--bg:#f5fbf9;--card:#fff;--ink:#10302a;--muted:#506b62;--dim:#84a094;--line:#dceee8;--acc:#0d9488;--acc2:#0f766e;--soft:#e7faf5;--green:#0d9488;--gsoft:#e6f9f3;--blue:#2563eb;--bsoft:#e9f0fe;--amber:#c2730a;--asoft:#fff6e8;--rose:#e11d48;--violet:#7c3aed}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7;font-size:14.5px}
+  a{color:var(--acc)}.wrap{display:grid;grid-template-columns:250px 1fr;max-width:1300px;margin:0 auto}
+  nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 13px;border-right:1px solid var(--line);background:#fff}
+  nav .bk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;color:#fff;background:var(--acc);padding:3px 9px;border-radius:6px;margin-bottom:7px}
+  nav .brand{font-weight:800;font-size:14.5px}nav .sub{color:var(--dim);font-size:11px;margin-bottom:12px}
+  nav a{display:block;color:var(--muted);padding:5px 10px;border-radius:7px;font-size:12.3px}nav a:hover{background:var(--soft);color:var(--acc2);text-decoration:none}
+  nav .grp{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:12px 0 2px 10px}
+  main{padding:36px 50px 110px;min-width:0}
+  .tag{display:inline-block;background:var(--soft);color:var(--acc2);border:1px solid #a7e8dd;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+  h1{font-size:28px;line-height:1.25;margin:0 0 10px;font-weight:800}h1 em{font-style:normal;color:var(--acc)}
+  .lede{color:var(--muted);font-size:15.5px;max-width:830px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.mt{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--muted)}.mt b{color:var(--ink)}
+  section{margin:34px 0;scroll-margin-top:12px}
+  h2{font-size:20px;margin:0 0 6px;font-weight:800;display:flex;align-items:center;gap:10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h2 .x{background:var(--acc);color:#fff;min-width:25px;height:25px;padding:0 6px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  h3{font-size:15px;margin:18px 0 7px}.note{color:var(--dim);font-size:12.3px;margin-bottom:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.4px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#e7f6f2;color:var(--ink);font-weight:700}td{color:var(--muted)}tr:last-child td{border-bottom:none}td strong{color:var(--ink)}
+  .hl{color:var(--acc2);font-weight:700}
+  ul.clean{margin:7px 0;padding-left:18px}ul.clean li{margin:3px 0;color:var(--muted)}ul.clean li strong{color:var(--ink)}
+  code{background:#eef2f5;padding:1.5px 6px;border-radius:5px;font-size:12px;color:var(--violet);font-family:Consolas,monospace}
+  pre{background:#0a1c18;border:1px solid var(--line);border-radius:11px;padding:14px 16px;overflow-x:auto;font-size:11.6px;line-height:1.5;color:#bfe2d8;margin:11px 0}
+  pre .c{color:#5d8a7c}pre .k{color:#5eead4}pre .s{color:#6ee7b7}pre .y{color:#fcd34d}pre .t{color:#c4b5fd}pre .r{color:#fca5a5}
+  .box{border-radius:9px;padding:10px 13px;margin:6px 0;font-size:12.6px}
+  .box.acc{background:var(--gsoft);border:1px solid #aee6d8}.box.acc b{color:#0f766e}
+  .callout{border-left:4px solid var(--acc);background:var(--soft);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;color:var(--muted)}.callout.amber{border-color:var(--amber);background:var(--asoft)}.callout.green{border-color:var(--green);background:var(--gsoft)}.callout b{color:var(--ink)}
+  .chk{list-style:none;padding:0;margin:8px 0}
+  .chk li{padding:6px 0 6px 28px;position:relative;border-bottom:1px solid var(--line);font-size:12.7px;color:var(--muted)}.chk li:last-child{border-bottom:none}
+  .chk li::before{content:"☐";position:absolute;left:3px;top:5px;color:var(--acc);font-size:15px}
+  .chk li b{color:var(--ink)}.chk .fid{display:inline-block;font-size:10px;font-weight:800;color:var(--acc2);background:#eafaf6;border:1px solid #bfeae0;padding:0 6px;border-radius:5px;margin-right:6px}
+  .done{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--gsoft);color:#0f766e}
+  .foot{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}main{padding:22px 14px 60px}.grid2,.grid3{grid-template-columns:1fr}h1{font-size:22px}}
+  @media print{nav{display:none}.wrap{grid-template-columns:1fr}body{background:#fff}main{padding:0}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="bk">LAYER 1</span>
+    <div class="brand">数据加工 · 实施手册</div>
+    <div class="sub">交付包 · ready-to-build</div>
+    <a href="#status">完成度总览</a>
+    <a href="#deliverables">L1 交付物清单</a>
+    <a href="#standalone">独立开发说明</a>
+    <div class="grp">开工就绪</div>
+    <a href="#env">① 环境与依赖</a>
+    <a href="#scaffold">② 仓库脚手架</a>
+    <a href="#contracts">③ 模块与接口契约</a>
+    <a href="#graph">④ LangGraph 图规格</a>
+    <a href="#config">⑤ 配置项清单</a>
+    <div class="grp">执行</div>
+    <a href="#checklist">⑥ 逐任务执行清单</a>
+    <a href="#smoke">⑦ 冒烟自检</a>
+    <a href="#dod">⑧ 完成判定</a>
+    <a href="#handoff">交付给 Codex</a>
+  </nav>
+  <main>
+    <span class="tag">L1 实施手册 · 把计划补齐到可开敲</span>
+    <h1>L1 数据加工 — <em>实施手册（交付包）</em></h1>
+    <p class="lede">把 L1 从"计划"补齐到<b>执行级交付包</b>：环境、脚手架、接口契约（带签名）、LangGraph 图规格、配置清单、逐任务执行清单、冒烟自检。L1 可<b>对 L0 stub 独立开发与验收</b>，集成时仅换一个 ContentProvider 实现。</p>
+    <div class="meta">
+      <span class="mt">定位：<b>计划 → 代码 的桥</b></span>
+      <span class="mt">独立开发：<b>L0 stub + fixtures</b></span>
+      <span class="mt">栈：<b>Python · LangGraph · PG/pgvector</b></span>
+    </div>
+
+    <section id="status">
+      <h2><span class="x">✓</span>完成度总览</h2>
+      <div class="card">
+        <p style="margin-top:0">L1 文档包已闭环（与 L0 同样的 4 件套），可整包交给 Codex：</p>
+        <table>
+          <thead><tr><th>交付物</th><th>覆盖</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>L1 产品文档</td><td>定位、与垂直无关原则、客户、产物契约、指标、边界</td><td><span class="done">完成</span></td></tr>
+            <tr><td>L1 架构设计</td><td>LangGraph 基础分析图、数据模型、分级、缓存/重放</td><td><span class="done">完成</span></td></tr>
+            <tr><td>L1 详尽开发 Plan</td><td>10 EPIC / ~30 小功能 + 验收 + 自测 + DDL + 测试策略</td><td><span class="done">完成</span></td></tr>
+            <tr><td><strong>L1 实施手册（本文）</strong></td><td>环境/脚手架/接口/图规格/配置/执行/冒烟</td><td><span class="done">完成</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="deliverables">
+      <h2><span class="x">▤</span>L1 交付物清单（4 份 — 放进同一文件夹）</h2>
+      <ul class="clean">
+        <li><strong>L1-数据加工-产品文档.html</strong> — 为什么/做什么/不做什么</li>
+        <li><strong>L1-数据加工-架构设计.html</strong> — 怎么设计（LangGraph 图）</li>
+        <li><strong>L1-开发Plan-详尽版.html</strong> — 小功能拆解 + 验收 + 自测 + DDL</li>
+        <li><strong>L1-实施手册-交付包.html</strong>（本文）— 怎么开工（脚手架/接口/执行）</li>
+      </ul>
+    </section>
+
+    <section id="standalone">
+      <h2><span class="x">⇄</span>独立开发说明（并行 + 后统一）</h2>
+      <div class="callout amber"><b>L1 不依赖 L0 完成即可开发。</b>L1 取内容只经 <code>ContentProvider</code> 接口；开发期注入 <b>StubContentProvider</b>（读 fixtures），集成期换成 <b>L0ContentProvider</b>（调 L0 真实查询）。<b>统一集成时只改这一处注入 + schema 合并</b>，其余零改动。</div>
+      <table>
+        <thead><tr><th>接缝</th><th>L1 的角色</th><th>统一时怎么对接</th></tr></thead>
+        <tbody>
+          <tr><td>内容输入</td><td>经 ContentProvider 取</td><td>Stub → L0 真实现，注入切换</td></tr>
+          <tr><td>触发</td><td>消费 <code>content.ingested</code></td><td>接到平台事件总线即可</td></tr>
+          <tr><td>产物</td><td>写 <code>content_base_analysis</code> + 发 <code>content.analyzed</code></td><td>L2 直接消费，无需改 L1</td></tr>
+          <tr><td>DB</td><td>拥有 base_analysis/cache 表，只读 content_items</td><td>迁移合并，无表冲突</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="env">
+      <h2><span class="x">1</span>环境与依赖</h2>
+      <p class="note">复用平台基础设施（PG+pgvector / Redis）。L1 额外需要 LLM 凭证；测试用 FakeLLM 不需真凭证。</p>
+      <pre><span class="c"># 复用平台 docker-compose（postgres+pgvector / redis）</span>
+make up && make migrate          <span class="c"># 含 content_base_analysis / enrichment_cache 迁移</span>
+<span class="c"># L1 专用命令</span>
+make l1-enrich CID=123           <span class="c"># 对单条内容跑加工(可用 stub 内容)</span>
+make l1-smoke                    <span class="c"># 端到端冒烟(FakeLLM)</span>
+make test                        <span class="c"># 单元 + 图测试(FakeLLM, 不真调模型)</span></pre>
+      <div class="box acc"><b>✓ 验收</b> — <code>make up && make migrate && make l1-smoke</code> 全绿（用 FakeLLM + stub 内容）即环境就绪。</div>
+    </section>
+
+    <section id="scaffold">
+      <h2><span class="x">2</span>仓库脚手架</h2>
+      <pre><span class="k">packages/enrichment_graph/</span>
+  enrichment_graph/
+    config.py
+    llm/ client.py router.py fake.py     <span class="c"># LLMClient / ModelRouter / FakeLLM</span>
+    graph/
+      state.py            <span class="c"># GraphState</span>
+      nodes/ clean.py filter.py split.py analyze.py
+             extract.py embed.py tag.py persist.py
+      build.py            <span class="c"># 装配 StateGraph + graph_version</span>
+    input/ provider.py stub.py           <span class="c"># ContentProvider + StubContentProvider</span>
+    persist/ repository.py contracts.py  <span class="c"># 写 base_analysis + 产物 schema</span>
+    events/ consume.py emit.py           <span class="c"># 订阅 ingested / 发 analyzed</span>
+    cache.py cost.py
+    scripts/ smoke.py
+  tests/ unit/ graph/ fixtures/{content,llm} golden/
+  pyproject.toml
+<span class="k">workers/enrichment/</span> worker.py            <span class="c"># Arq: enrich(content_id)</span></pre>
+      <div class="callout"><b>边界：</b><code>enrichment_graph</code> 仅依赖 <code>common</code> 与 <code>ContentProvider</code> 接口；禁止 import L2/L3 或直接 import L0 内部（只通过 provider 接口）。</div>
+    </section>
+
+    <section id="contracts">
+      <h2><span class="x">3</span>模块与接口契约（关键签名）</h2>
+      <h3>输入：ContentProvider（解耦 L0）</h3>
+      <pre><span class="k">class</span> <span class="t">ContentInput</span>(BaseModel):
+    id: int; clean_text: str; title: str|None; lang: str|None
+    source: SourceRef; published_at: datetime|None; content_hash: str
+
+<span class="k">class</span> <span class="t">ContentProvider</span>(Protocol):
+    <span class="k">def</span> get(self, content_id: int) -> ContentInput: ...
+
+<span class="k">class</span> <span class="t">StubContentProvider</span>:        <span class="c"># 开发/测试用，读 fixtures</span>
+    <span class="k">def</span> get(self, content_id): return load_fixture(content_id)
+<span class="k">class</span> <span class="t">L0ContentProvider</span>:          <span class="c"># 集成用，调 L0 query.get_content</span>
+    <span class="k">def</span> get(self, content_id): return adapt(l0_get_content(content_id))</pre>
+      <h3>LLM 客户端与路由</h3>
+      <pre><span class="k">class</span> <span class="t">LLMClient</span>(Protocol):
+    <span class="k">def</span> complete(self, prompt, *, tier: str) -> str: ...
+    <span class="k">def</span> structured(self, prompt, schema, *, tier: str) -> dict: ...
+    <span class="k">def</span> embed(self, text: str) -> list[float]: ...
+
+<span class="k">class</span> <span class="t">ModelRouter</span>:                 <span class="c"># tier→model，读 ConfigKey</span>
+    tiers = {"cheap": ..., "standard": ..., "embed": ...}
+<span class="k">class</span> <span class="t">FakeLLM</span>(LLMClient):           <span class="c"># 返回预设响应，确定性测试</span></pre>
+      <h3>图状态 + 节点签名</h3>
+      <pre><span class="k">class</span> <span class="t">GraphState</span>(TypedDict):
+    content_id: int; text: str; lang: str|None
+    ignore: bool; chunks: list[str]
+    one_liner, summary; key_points, quotes, entities: list
+    base_tags: list; embedding: list[float]
+    tokens_in, tokens_out: int; cost: float; graph_version: str
+
+<span class="c"># 每个节点签名统一</span>
+<span class="k">def</span> node(state: GraphState, *, llm: LLMClient) -> GraphState: ...
+<span class="c"># 节点: clean → filter →(branch)→ analyze/split+map+aggregate</span>
+<span class="c">#       → extract → embed → tag → persist</span></pre>
+      <h3>产物契约（给 L2/L3，冻结）</h3>
+      <pre><span class="k">class</span> <span class="t">BaseAnalysis</span>(BaseModel):
+    content_id: int
+    one_liner: str; summary: str
+    key_points: list[str]; quotes: list[str]; entities: list[Entity]
+    base_tags: list[str]; lang: str
+    <span class="c"># embedding 存 pgvector，不在对外 schema</span>
+
+<span class="k">def</span> persist(analysis: BaseAnalysis, meta: AnalysisMeta) -> None   <span class="c"># upsert by content_id</span>
+<span class="k">def</span> emit_analyzed(session, content_id: int) -> None              <span class="c"># outbox: content.analyzed</span></pre>
+      <div class="callout green"><b>冻结点：</b><code>BaseAnalysis</code> schema 与 <code>content.analyzed</code> 事件是 L2 唯一依赖。这俩定死后，L1 内部图怎么改都不影响下游——并行开发与统一的保证。</div>
+    </section>
+
+    <section id="graph">
+      <h2><span class="x">4</span>LangGraph 图规格</h2>
+      <pre><span class="s">build_graph(graph_version="l1-v1") -> StateGraph</span>
+  clean ─▶ filter ─(ignore?)─▶ [END: status=CANCELLED]
+                  └─pass─▶ branch_by_length
+                            ├ short ─▶ analyze_full ─┐
+                            └ long  ─▶ split ▶ map(analyze_chunk) ▶ aggregate ─┤
+                                  └─▶ extract ─▶ embed ─▶ tag ─▶ persist ─▶ emit
+节点模型档: filter=<span class="y">cheap</span> · analyze/extract=<span class="y">standard</span> · embed=<span class="y">embed</span>
+缓存键: (content_hash, graph_version)；命中跳过 LLM
+失败: 节点级重试(退避)；schema 校验失败 → 重试/降级；多次失败标记不污染产物</pre>
+      <div class="note">完整图说明见《L1 架构设计》§3；本处为可实现的装配规格。</div>
+    </section>
+
+    <section id="config">
+      <h2><span class="x">5</span>配置项清单（.env 追加）</h2>
+      <pre>LLM_API_BASE=...            LLM_API_KEY=...
+LLM_TIER_CHEAP=gpt-cheap-model
+LLM_TIER_STANDARD=gpt-standard-model
+LLM_TIER_EMBED=embedding-model
+EMBED_DIM=1536
+L1_LONG_TEXT_THRESHOLD=6000
+L1_GRAPH_VERSION=l1-v1
+L1_FILTER_ENABLED=true
+L1_COST_DAILY_ALERT_USD=20
+L1_MAX_CONCURRENCY=4
+L1_USE_FAKE_LLM=false       <span class="c"># 测试置 true</span></pre>
+    </section>
+
+    <section id="checklist">
+      <h2><span class="x">6</span>逐任务执行清单（按 Sprint）</h2>
+      <h3>Sprint L1-S1 · 骨架</h3>
+      <ul class="chk">
+        <li><span class="fid">F0.1</span> 包骨架 + enrichment worker</li>
+        <li><span class="fid">F0.2</span> LLMClient + ModelRouter + FakeLLM <b>→ 可注入替换</b></li>
+        <li><span class="fid">F0.3</span> LangGraph 运行底座 + trace</li>
+        <li><span class="fid">F1.1</span> ContentProvider 抽象</li>
+        <li><span class="fid">F1.2</span> L0 stub + fixtures <b>→ 无真 L0 可跑</b></li>
+        <li><span class="fid">F1.3</span> 消费 content.ingested（幂等）</li>
+        <li><span class="fid">F2.1</span> GraphState</li>
+        <li><span class="fid">F2.2</span> 图装配 + enrich() 入口 <b>→ 端到端跑通（占位节点）</b></li>
+      </ul>
+      <h3>Sprint L1-S2 · 核心分析</h3>
+      <ul class="chk">
+        <li><span class="fid">F3.1</span> clean_normalize</li>
+        <li><span class="fid">F3.2</span> filter 初评 <b>→ 低质短路 CANCELLED</b></li>
+        <li><span class="fid">F4.1</span> 长度分支</li>
+        <li><span class="fid">F4.2</span> 分段 map + 聚合 <b>→ 长文不遗漏</b></li>
+        <li><span class="fid">F5.1</span> 结构化抽取 <b>→ schema 100% 通过</b></li>
+        <li><span class="fid">F5.2</span> 校验与降级重试</li>
+      </ul>
+      <h3>Sprint L1-S3 · 向量 + 产物</h3>
+      <ul class="chk">
+        <li><span class="fid">F6.1</span> Embedding → pgvector</li>
+        <li><span class="fid">F6.2</span> 语言识别 + 基础标签（与垂直无关）</li>
+        <li><span class="fid">F7.1</span> 写 content_base_analysis（upsert）</li>
+        <li><span class="fid">F7.2</span> 状态推进 WAIT_ANALYSIS→WAIT_SCORE/CANCELLED</li>
+        <li><span class="fid">F7.3</span> content.analyzed outbox <b>→ 不丢不重</b></li>
+      </ul>
+      <h3>Sprint L1-S4 · 成本 + 重放</h3>
+      <ul class="chk">
+        <li><span class="fid">F8.1</span> 模型分级路由（ConfigKey）</li>
+        <li><span class="fid">F8.2</span> 成本计量 + 告警</li>
+        <li><span class="fid">F9.1</span> enrichment_cache <b>→ 命中 0 次 LLM</b></li>
+        <li><span class="fid">F9.2</span> reprocess / 版本升级重放</li>
+      </ul>
+    </section>
+
+    <section id="smoke">
+      <h2><span class="x">7</span>端到端冒烟自检（FakeLLM）</h2>
+      <pre><span class="c"># make l1-smoke 流程（伪代码，零成本确定性）</span>
+<span class="k">def</span> smoke():
+    provider = StubContentProvider(); llm = FakeLLM(preset_responses)
+    <span class="t">1.</span> 取 fixture 内容(正常文章) → enrich(cid)
+    <span class="t">2.</span> assert content_base_analysis(cid) 存在且 schema 合法
+    <span class="t">3.</span> assert summary/key_points/entities 非空；embedding 维度=EMBED_DIM
+    <span class="t">4.</span> assert status == WAIT_SCORE
+    <span class="t">5.</span> 取 fixture(营销低质) → enrich → assert status == CANCELLED（短路）
+    <span class="t">6.</span> 再 enrich 同内容 → assert LLM 调用数==0（缓存命中）
+    <span class="t">7.</span> assert outbox 有 content.analyzed
+    <span class="t">8.</span> print "L1 PIPELINE: PASS" + 各节点 tokens/cost</pre>
+      <div class="box acc"><b>✓ 验收</b> — <code>make l1-smoke</code> 输出 <code>L1 PIPELINE: PASS</code>。这是 L1 日常自检与 CI 的核心用例。</div>
+    </section>
+
+    <section id="dod">
+      <h2><span class="x">8</span>完成判定（L1 DoD）</h2>
+      <ul class="chk">
+        <li>用 stub + FakeLLM <b>独立端到端跑通</b>并验收，无需真 L0/真模型</li>
+        <li>初评剔除低质（CANCELLED）；正常文章产出完整结构化分析</li>
+        <li>抽取严格符合 <code>BaseAnalysis</code> schema、与原文一致不臆造</li>
+        <li>长文分段聚合不遗漏要点</li>
+        <li>embedding 入 pgvector；标签与垂直无关</li>
+        <li>content_base_analysis 完整 upsert；content.analyzed 不丢不重；状态正确</li>
+        <li>模型分级生效、单篇成本可统计、超阈告警</li>
+        <li>缓存命中省成本；版本升级可重放</li>
+        <li>单元 + 图测试覆盖率达标，CI 全绿（不真调模型）</li>
+      </ul>
+      <div class="callout green"><b>达成即：</b>L1 可独立交付。统一集成时把 <code>StubContentProvider</code> 换成 <code>L0ContentProvider</code>、接平台事件总线、合并迁移即可。</div>
+    </section>
+
+    <section id="handoff">
+      <h2><span class="x">→</span>交付给 Codex</h2>
+      <div class="card">
+        <p style="margin-top:0"><b>把这 4 份 L1 文档放进一个文件夹</b>（如 <code>L1-数据加工/</code>），连同给 Codex 的指令：</p>
+        <ul class="clean">
+          <li>按《L1-开发Plan-详尽版》的 EPIC/Feature 顺序实现，逐个用其「验收」+「自测」收口</li>
+          <li>按《L1-实施手册》的脚手架、接口契约、图规格、配置开工</li>
+          <li>用 <b>StubContentProvider + FakeLLM</b> 独立开发，<b>不依赖 L0/真模型</b></li>
+          <li>每个 Feature 完成即跑其自测；Sprint 末跑 <code>make l1-smoke</code></li>
+          <li>全部通过《L1 DoD》即交付</li>
+        </ul>
+        <p style="margin-bottom:0"><b>统一集成的契约已冻结</b>：输入 <code>ContentProvider</code>、输出 <code>BaseAnalysis</code> + <code>content.analyzed</code>、表归属清晰——Codex 独立产出的 L1 可直接并入平台。</p>
+      </div>
+    </section>
+
+    <div class="foot">L1 数据加工 · 实施手册（交付包）· 可对 L0 stub 独立开发 · 契约冻结便于统一 · CodePick 分层平台 · 2026-05-30</div>
+  </main>
+</div>
+</body>
+</html>

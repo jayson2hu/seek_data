@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1 数据加工 · 产品文档</title>
+<style>
+  :root{--bg:#f6f8fb;--card:#fff;--ink:#13202c;--muted:#54616f;--dim:#8896a4;--line:#e3e9f1;--acc:#0d9488;--acc2:#0f766e;--soft:#e7faf5;--amber:#c2730a;--rose:#e11d48;--violet:#7c3aed}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}
+  a{color:var(--acc)}.wrap{display:grid;grid-template-columns:236px 1fr;max-width:1240px;margin:0 auto}
+  nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 14px;border-right:1px solid var(--line);background:#fff}
+  nav .bk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;color:#fff;background:var(--acc);padding:3px 9px;border-radius:6px;margin-bottom:8px}
+  nav .brand{font-weight:800;font-size:15px}nav .sub{color:var(--dim);font-size:11px;margin-bottom:14px}
+  nav a{display:block;color:var(--muted);padding:5.5px 11px;border-radius:8px;font-size:12.6px}nav a:hover{background:var(--soft);color:var(--acc2);text-decoration:none}
+  main{padding:38px 52px 110px;min-width:0}
+  .tag{display:inline-block;background:var(--soft);color:var(--acc2);border:1px solid #a7e8dd;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+  h1{font-size:29px;line-height:1.25;margin:0 0 10px;font-weight:800}h1 em{font-style:normal;color:var(--acc)}
+  .lede{color:var(--muted);font-size:16px;max-width:820px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.mt{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--muted)}.mt b{color:var(--ink)}
+  section{margin:36px 0;scroll-margin-top:14px}
+  h2{font-size:20px;margin:0 0 6px;font-weight:800;display:flex;align-items:center;gap:10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h2 .x{background:var(--acc);color:#fff;width:25px;height:25px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;flex-shrink:0}
+  h3{font-size:15.5px;margin:18px 0 7px}.note{color:var(--dim);font-size:12.5px;margin-bottom:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px 19px;margin:12px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .mini{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px}.mini h4{margin:0 0 5px;font-size:13.8px}.mini p{margin:0;color:var(--muted);font-size:12.3px}.mini .ic{font-size:18px;margin-bottom:5px;display:block}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.6px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#e9f7f3;color:var(--ink);font-weight:700}td{color:var(--muted)}tr:last-child td{border-bottom:none}td strong{color:var(--ink)}
+  .hl{color:var(--acc2);font-weight:700}
+  ul.clean{margin:8px 0;padding-left:19px}ul.clean li{margin:4px 0;color:var(--muted)}ul.clean li strong{color:var(--ink)}
+  .callout{border-left:4px solid var(--acc);background:var(--soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;color:var(--muted)}.callout.amber{border-color:var(--amber);background:#fff8ec}.callout b{color:var(--ink)}
+  code{background:#eef1f6;padding:1.5px 6px;border-radius:5px;font-size:12.2px;color:var(--violet);font-family:Consolas,monospace}
+  .badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;background:var(--soft);color:var(--acc2)}
+  .foot{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}main{padding:22px 15px 60px}.grid2,.grid3{grid-template-columns:1fr}h1{font-size:23px}}
+  @media print{nav{display:none}.wrap{grid-template-columns:1fr}body{background:#fff}main{padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="bk">LAYER 1</span>
+    <div class="brand">数据加工</div>
+    <div class="sub">产品文档 · Enrichment</div>
+    <a href="#what">① 是什么</a>
+    <a href="#value">② 核心价值</a>
+    <a href="#customers">③ 客户</a>
+    <a href="#scope">④ 能力范围</a>
+    <a href="#contract">⑤ 产物契约</a>
+    <a href="#once">⑥ 算一次原则</a>
+    <a href="#metrics">⑦ 指标</a>
+    <a href="#boundary">⑧ 边界</a>
+    <a href="#roadmap">⑨ 演进</a>
+  </nav>
+  <main>
+    <span class="tag">分层产品 2 / 4 · 产品文档</span>
+    <h1>L1 数据加工 — <em>Content Enrichment Service</em></h1>
+    <p class="lede">把 L0 的原始内容加工成<b>结构化的"内容知识"</b>：一句话总结、摘要、关键观点、金句、实体、向量、基础标签。这层<b>与垂直无关、算一次、全局复用</b>，是上层一切判断与体验的共同底料。</p>
+    <div class="meta">
+      <span class="mt">层级：<b>L1</b></span>
+      <span class="mt">形态：<b>内容理解服务</b></span>
+      <span class="mt">客户：<b>L2 / L3</b></span>
+      <span class="mt">信条：<b>与垂直无关 · 算一次</b></span>
+    </div>
+
+    <section id="what">
+      <h2><span class="x">1</span>是什么</h2>
+      <p>L1 消费 L0 的 <code>content.ingested</code> 事件，对每条内容做<b>通用的内容理解</b>，产出结构化分析，写回平台供上层使用。它像一个"内容理解 API"：进去是原文，出来是机器与人都能高效消费的结构化知识。</p>
+      <div class="grid3">
+        <div class="mini"><span class="ic">🧹</span><h4>清洗 + 初评</h4><p>规范化文本；小模型剔除低质/营销内容，降低后续成本。</p></div>
+        <div class="mini"><span class="ic">📝</span><h4>基础分析</h4><p>一句话总结、摘要、关键观点、金句、实体抽取。</p></div>
+        <div class="mini"><span class="ic">🧲</span><h4>向量 + 标签</h4><p>embedding（语义召回）+ 基础打标 + 语言识别。</p></div>
+      </div>
+    </section>
+
+    <section id="value">
+      <h2><span class="x">2</span>核心价值</h2>
+      <div class="callout"><b>把"理解成本"从 N 次降到 1 次。</b>同一篇内容，无论被多少个垂直、多少个产品消费，基础理解只算一次、存一份、所有上层复用。这既是<b>成本优势</b>，也是<b>跨垂直综合</b>能力的来源——大家用的是同一份内容知识。</div>
+    </section>
+
+    <section id="customers">
+      <h2><span class="x">3</span>它的客户</h2>
+      <table>
+        <thead><tr><th>客户</th><th>从 L1 要什么</th></tr></thead>
+        <tbody>
+          <tr><td><strong>L2 判断/Agent</strong></td><td>摘要/观点/实体/向量作为评分、翻译、推荐的输入（不必重读全文）</td></tr>
+          <tr><td><strong>L3 产品/站点</strong></td><td>详情页"秒开"展示摘要与观点；搜索用向量；早报用结构化字段</td></tr>
+          <tr><td><strong>L0（反向触发）</strong></td><td>响应 <code>content.reprocess</code>，对历史内容重新加工</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="scope">
+      <h2><span class="x">4</span>能力范围</h2>
+      <table>
+        <thead><tr><th>能力</th><th>说明</th><th>阶段</th></tr></thead>
+        <tbody>
+          <tr><td><strong>文本清洗/规范化</strong></td><td>去噪、分段、长度评估</td><td><span class="badge">MVP</span></td></tr>
+          <tr><td><strong>初评过滤</strong></td><td>小模型判定低质/营销，标 CANCELLED 不进深加工</td><td><span class="badge">MVP</span></td></tr>
+          <tr><td><strong>基础分析</strong></td><td>一句话/摘要/关键观点/金句/实体</td><td><span class="badge">MVP</span></td></tr>
+          <tr><td><strong>Embedding</strong></td><td>title+summary 向量，写 pgvector</td><td><span class="badge">MVP</span></td></tr>
+          <tr><td><strong>语言识别 + 基础标签</strong></td><td>lang + 通用主题/形式标签</td><td><span class="badge">MVP</span></td></tr>
+          <tr><td><strong>长文分段聚合</strong></td><td>超长内容分段分析再聚合，避免遗漏</td><td>V1</td></tr>
+          <tr><td><strong>播客转写</strong></td><td>音频 → 文本（ASR）后进同一管线</td><td>V1</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="contract">
+      <h2><span class="x">5</span>产物契约（对上层）</h2>
+      <ul class="clean">
+        <li><strong>产物</strong>：<code>content_base_analysis</code>（one_liner / summary / key_points / quotes / entities / base_tags / embedding）。</li>
+        <li><strong>事件</strong>：完成后发 <code>content.analyzed</code>，驱动 L2 评分。</li>
+        <li><strong>状态推进</strong>：<code>WAIT_FILTER → WAIT_ANALYSIS →</code>（完成后）<code>WAIT_SCORE</code>。</li>
+        <li><strong>稳定性</strong>：产物结构对上层稳定；模型/prompt 可换，结构不变。</li>
+      </ul>
+    </section>
+
+    <section id="once">
+      <h2><span class="x">6</span>"算一次"原则</h2>
+      <div class="callout amber"><b>L1 严格与垂直无关。</b>凡是"对 AI Coding 而言好不好"的判断都<b>不在</b>这层（那是 L2）。L1 只回答"这篇内容客观上讲了什么"。这条边界一旦守不住，就会退化成"每个垂直各算一遍"，丢掉成本优势与综合能力。</div>
+    </section>
+
+    <section id="metrics">
+      <h2><span class="x">7</span>核心指标</h2>
+      <div class="grid3">
+        <div class="mini"><span class="ic">✅</span><h4>分析成功率</h4><p>成功产出结构化分析的比例</p></div>
+        <div class="mini"><span class="ic">💵</span><h4>单篇成本</h4><p>平均 LLM 成本/篇（核心约束）</p></div>
+        <div class="mini"><span class="ic">🚮</span><h4>过滤准确率</h4><p>初评剔除低质的准确性</p></div>
+        <div class="mini"><span class="ic">⏱️</span><h4>加工时延</h4><p>入库到分析完成的延迟</p></div>
+        <div class="mini"><span class="ic">🎯</span><h4>摘要质量</h4><p>抽检的摘要/观点准确性</p></div>
+        <div class="mini"><span class="ic">💾</span><h4>缓存命中率</h4><p>重放/重复内容复用比例</p></div>
+      </div>
+    </section>
+
+    <section id="boundary">
+      <h2><span class="x">8</span>边界：L1 不做什么</h2>
+      <ul class="clean">
+        <li><strong>不做垂直判断</strong>：不打分、不判"值不值得读"——L2。</li>
+        <li><strong>不做翻译/推荐/问答</strong>——L2。</li>
+        <li><strong>不抓取/不存原文</strong>——L0。</li>
+        <li><strong>不面向终端</strong>——L3。</li>
+      </ul>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="x">9</span>演进</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>重点</th></tr></thead>
+        <tbody>
+          <tr><td>MVP</td><td>初评 + 基础分析 + embedding + 语言/标签</td></tr>
+          <tr><td>V1</td><td>长文分段聚合、播客转写、缓存与重放完善</td></tr>
+          <tr><td>V2</td><td>更细粒度结构（章节/代码块识别）、多模态</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><b>配套：</b>技术实现见《L1 数据加工 · 架构设计文档》。</div>
+    </section>
+
+    <div class="foot">L1 数据加工 · 产品文档 · CodePick 分层平台（2/4）· 与垂直无关 · 算一次 · 全局复用 · 2026-05-30</div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "content_id": "demo-article",
+  "title": "L1 standalone data processing fixture",
+  "body": "This fixture lets L1 run without L0. It verifies that content enters through a provider, analysis is deterministic, and embeddings are generated locally.",
+  "source_url": "https://example.test/l1/demo-article",
+  "author": "fixture",
+  "published_at": "2026-05-30T00:00:00+00:00",
+  "metadata": {
+    "source": "fixture"
+  }
+}

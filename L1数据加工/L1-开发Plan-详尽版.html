@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L1 数据加工 · 详尽开发 Plan</title>
+<style>
+  :root{--bg:#f5fbf9;--card:#fff;--ink:#10302a;--muted:#506b62;--dim:#84a094;--line:#dceee8;--acc:#0d9488;--acc2:#0f766e;--soft:#e7faf5;--green:#0d9488;--gsoft:#e6f9f3;--blue:#2563eb;--bsoft:#e9f0fe;--amber:#c2730a;--asoft:#fff6e8;--rose:#e11d48;--violet:#7c3aed}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7;font-size:14.5px}
+  a{color:var(--acc)}.wrap{display:grid;grid-template-columns:252px 1fr;max-width:1300px;margin:0 auto}
+  nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 13px;border-right:1px solid var(--line);background:#fff}
+  nav .bk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;color:#fff;background:var(--acc);padding:3px 9px;border-radius:6px;margin-bottom:7px}
+  nav .brand{font-weight:800;font-size:14.5px}nav .sub{color:var(--dim);font-size:11px;margin-bottom:12px}
+  nav a{display:block;color:var(--muted);padding:5px 10px;border-radius:7px;font-size:12.3px}nav a:hover{background:var(--soft);color:var(--acc2);text-decoration:none}
+  nav .grp{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:12px 0 2px 10px}
+  main{padding:36px 50px 110px;min-width:0}
+  .tag{display:inline-block;background:var(--soft);color:var(--acc2);border:1px solid #a7e8dd;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+  h1{font-size:28px;line-height:1.25;margin:0 0 10px;font-weight:800}h1 em{font-style:normal;color:var(--acc)}
+  .lede{color:var(--muted);font-size:15.5px;max-width:830px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.mt{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--muted)}.mt b{color:var(--ink)}
+  section{margin:34px 0;scroll-margin-top:12px}
+  h2{font-size:20px;margin:0 0 6px;font-weight:800;display:flex;align-items:center;gap:10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h2 .x{background:var(--acc);color:#fff;min-width:25px;height:25px;padding:0 6px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  h3{font-size:15px;margin:18px 0 7px}.note{color:var(--dim);font-size:12.3px;margin-bottom:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.4px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#e7f6f2;color:var(--ink);font-weight:700}td{color:var(--muted)}tr:last-child td{border-bottom:none}td strong{color:var(--ink)}
+  .hl{color:var(--acc2);font-weight:700}
+  ul.clean{margin:7px 0;padding-left:18px}ul.clean li{margin:3px 0;color:var(--muted)}ul.clean li strong{color:var(--ink)}
+  code{background:#eef2f5;padding:1.5px 6px;border-radius:5px;font-size:12px;color:var(--violet);font-family:Consolas,monospace}
+  pre{background:#0a1c18;border:1px solid var(--line);border-radius:11px;padding:14px 16px;overflow-x:auto;font-size:11.6px;line-height:1.5;color:#bfe2d8;margin:11px 0}
+  pre .c{color:#5d8a7c}pre .k{color:#5eead4}pre .s{color:#6ee7b7}pre .y{color:#fcd34d}pre .t{color:#c4b5fd}
+  .feat{border:1px solid var(--line);border-radius:12px;margin:13px 0;overflow:hidden;background:#fff}
+  .feat .fh{display:flex;align-items:center;gap:10px;padding:11px 16px;background:#f0faf7;border-bottom:1px solid var(--line)}
+  .feat .fid{font-weight:800;color:var(--acc2);font-size:12.5px;background:#fff;border:1px solid #a7e8dd;padding:2px 8px;border-radius:6px;flex-shrink:0}
+  .feat .ft{font-weight:700;font-size:14.5px;color:var(--ink);flex:1}
+  .feat .eff{font-size:11px;color:var(--dim);background:#fff;border:1px solid var(--line);padding:2px 8px;border-radius:6px;flex-shrink:0}
+  .feat .fb{padding:13px 16px}
+  .feat .fdesc{color:var(--muted);font-size:12.8px;margin:0 0 9px}
+  .lbl{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin:10px 0 5px}
+  .lbl.task{color:var(--acc2)}.lbl.acc{color:var(--green)}.lbl.test{color:var(--blue)}
+  .subtasks{list-style:none;padding:0;margin:0}
+  .subtasks li{padding:4px 0 4px 26px;position:relative;font-size:12.8px;color:var(--muted)}
+  .subtasks li::before{content:"☐";position:absolute;left:2px;top:3px;color:var(--acc);font-size:14px}.subtasks li b{color:var(--ink)}
+  .box{border-radius:9px;padding:10px 13px;margin:6px 0;font-size:12.6px}
+  .box.acc{background:var(--gsoft);border:1px solid #aee6d8}.box.acc b{color:#0f766e}
+  .box.test{background:var(--bsoft);border:1px solid #c3d6fb}.box.test b{color:#1d4ed8}
+  .box ul{margin:5px 0 0;padding-left:18px}.box li{margin:2px 0;color:var(--muted)}
+  .callout{border-left:4px solid var(--acc);background:var(--soft);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;color:var(--muted)}.callout.amber{border-color:var(--amber);background:var(--asoft)}.callout.green{border-color:var(--green);background:var(--gsoft)}.callout b{color:var(--ink)}
+  .pri{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:5px}
+  .p-must{background:#fde8ea;color:#b91c3a}.p-should{background:#fff0d9;color:#a4670a}
+  .foot{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}nav{display:none}main{padding:22px 14px 60px}.grid2,.grid3{grid-template-columns:1fr}h1{font-size:22px}}
+  @media print{nav{display:none}.wrap{grid-template-columns:1fr}body{background:#fff}main{padding:0}.feat,.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="bk">LAYER 1</span>
+    <div class="brand">数据加工 · 开发 Plan</div>
+    <div class="sub">详尽版 · 含验收与自测</div>
+    <a href="#about">文档说明与范围</a>
+    <a href="#parallel">并行开发与契约</a>
+    <a href="#prereq">前置与技术基线</a>
+    <a href="#sprints">里程碑（4 Sprint）</a>
+    <a href="#ddl">数据库 DDL</a>
+    <div class="grp">功能拆解（EPIC）</div>
+    <a href="#e0">E0 工程基建</a>
+    <a href="#e1">E1 输入接入+L0 stub</a>
+    <a href="#e2">E2 管线骨架</a>
+    <a href="#e3">E3 清洗与初评</a>
+    <a href="#e4">E4 长文分段聚合</a>
+    <a href="#e5">E5 基础分析抽取</a>
+    <a href="#e6">E6 向量与打标</a>
+    <a href="#e7">E7 持久化与产物契约</a>
+    <a href="#e8">E8 模型分级与成本</a>
+    <a href="#e9">E9 缓存/幂等/重放</a>
+    <div class="grp">质量</div>
+    <a href="#teststrategy">测试策略</a>
+    <a href="#dod">L1 总验收 (DoD)</a>
+    <a href="#risk">风险与依赖</a>
+  </nav>
+  <main>
+    <span class="tag">开发 Plan · L1 数据加工 · 详尽版</span>
+    <h1>L1 数据加工 — <em>详尽开发计划</em></h1>
+    <p class="lede">把 L1 拆成 10 个 EPIC、约 30 个小功能，每个含<b>子任务、验收标准、自测</b>。L1 可<b>独立并行开发</b>：对着 L0 契约 stub + fixtures 即可全流程跑通与验收，集成时无缝对接。核心信条：<b>与垂直无关、算一次、全局复用</b>。</p>
+    <div class="meta">
+      <span class="mt">范围：<b>仅 L1（清洗+初评+基础分析+向量）</b></span>
+      <span class="mt">EPIC：<b>10 个</b></span>
+      <span class="mt">小功能：<b>~30 个</b></span>
+      <span class="mt">预估：<b>~17 人日</b></span>
+      <span class="mt">栈：<b>Python · LangGraph · PG/pgvector</b></span>
+    </div>
+
+    <section id="about">
+      <h2><span class="x">i</span>文档说明与范围</h2>
+      <div class="card">
+        <p style="margin-top:0"><b>本文档只覆盖 L1</b>（数据加工）。L1 消费 L0 产出的内容，做<b>与垂直无关的通用理解</b>（摘要/观点/金句/实体/向量/基础标签），产出给 L2/L3。</p>
+        <p style="margin-bottom:0"><b>结构</b>：EPIC → Feature（可独立交付验收）→ 子任务。每个 Feature 配 <span style="color:var(--green);font-weight:700">验收标准</span> 与 <span style="color:var(--blue);font-weight:700">自测</span>。<span class="pri p-must">MUST</span> = MVP 必需，<span class="pri p-should">SHOULD</span> = V1 完善。</p>
+      </div>
+    </section>
+
+    <section id="parallel">
+      <h2><span class="x">⇄</span>并行开发与契约（交给 Codex 的关键）</h2>
+      <p class="note">L1 与其他层<b>同时开发</b>，因此必须靠"契约"解耦——L1 不等 L0 完成即可开工与验收。</p>
+      <div class="grid2">
+        <div class="card"><h3 style="margin-top:0">⬇ 输入契约（来自 L0，可 stub）</h3><ul class="clean">
+          <li>事件 <code>content.ingested {content_id, lang}</code></li>
+          <li>查询 <code>get_content(id) -> {id, clean_text, lang, title, source, ...}</code></li>
+          <li><strong>standalone 开发</strong>：用 <code>L0ContentProvider</code> 的 stub 实现 + fixtures 喂内容，无需真 L0</li>
+        </ul></div>
+        <div class="card"><h3 style="margin-top:0">⬆ 输出契约（给 L2/L3）</h3><ul class="clean">
+          <li>产物表 <code>content_base_analysis</code>（结构稳定）</li>
+          <li>事件 <code>content.analyzed {content_id}</code></li>
+          <li>状态推进 <code>WAIT_ANALYSIS → WAIT_SCORE</code> / <code>CANCELLED</code></li>
+        </ul></div>
+      </div>
+      <div class="callout amber"><b>统一集成的接缝：</b>① 共享 DB（L1 拥有 <code>content_base_analysis</code> / <code>enrichment_cache</code> 表，只读 <code>content_items</code>）；② 共享事件主题（订阅 <code>content.ingested</code>，发 <code>content.analyzed</code>）；③ 共享 <code>content.status</code> 状态机。只要 L1 严守这三个接缝，集成时改一个 <code>ContentProvider</code> 实现（stub→真 L0）即可。</div>
+    </section>
+
+    <section id="prereq">
+      <h2><span class="x">0</span>前置与技术基线</h2>
+      <table>
+        <thead><tr><th>项</th><th>选型/版本</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>语言/编排</td><td>Python 3.12 · <strong>LangGraph</strong></td><td>包 <code>packages/enrichment_graph</code> + <code>workers/enrichment</code></td></tr>
+          <tr><td>LLM</td><td>统一 LLM 客户端 + 多模型路由</td><td>分档：小模型(初评) / 中端(分析) / embedding</td></tr>
+          <tr><td>存储</td><td>PostgreSQL + pgvector</td><td>content_base_analysis(含 embedding) · enrichment_cache</td></tr>
+          <tr><td>队列</td><td>Redis + Arq</td><td>消费 content.ingested → enrich(content_id)</td></tr>
+          <tr><td>测试 LLM</td><td>FakeLLM / 录制回放(cassette)</td><td><b>确定性 + 零成本</b>，CI 不真调模型</td></tr>
+          <tr><td>质量</td><td>pytest · ruff · mypy · 覆盖率门禁</td><td>同 L0</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><b>依赖方向：</b><code>enrichment_graph</code> 依赖 <code>common</code>，<b>不</b>依赖 L2/L3；对 L0 仅通过 <code>ContentProvider</code> 接口依赖（可注入 stub）。</div>
+    </section>
+
+    <section id="sprints">
+      <h2><span class="x">▦</span>里程碑（4 个 Sprint）</h2>
+      <table>
+        <thead><tr><th>Sprint</th><th>目标</th><th>含 EPIC</th><th>预估</th><th>可演示产出</th></tr></thead>
+        <tbody>
+          <tr><td><strong>L1-S1 骨架</strong></td><td>LangGraph 跑通空管线 + LLM 客户端 + L0 stub</td><td>E0·E1·E2</td><td>~4.5d</td><td>喂 fixture 内容 → 图跑通 → 落一条空壳产物</td></tr>
+          <tr><td><strong>L1-S2 核心分析</strong></td><td>初评 + 抽取 + 长文聚合</td><td>E3·E4·E5</td><td>~6d</td><td>真实文章 → 摘要/观点/金句/实体 正确产出</td></tr>
+          <tr><td><strong>L1-S3 向量+产物</strong></td><td>embedding/打标 + 持久化 + 事件</td><td>E6·E7</td><td>~3d</td><td>content_base_analysis 完整 + content.analyzed 发出</td></tr>
+          <tr><td><strong>L1-S4 成本+重放</strong></td><td>模型分级 + 缓存/幂等/重放</td><td>E8·E9</td><td>~3.5d</td><td>分级调用省成本 + 重放命中缓存</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="ddl">
+      <h2><span class="x">▤</span>数据库 DDL（L1 拥有的表）</h2>
+      <pre><span class="c">-- L1 产物（与垂直无关，算一次）</span>
+CREATE TABLE <span class="k">content_base_analysis</span>(
+  content_id BIGINT PRIMARY KEY REFERENCES content_items(id),
+  one_liner TEXT, summary TEXT,
+  key_points JSONB DEFAULT '[]', quotes JSONB DEFAULT '[]',
+  entities JSONB DEFAULT '[]', base_tags JSONB DEFAULT '[]',
+  embedding <span class="k">vector(1536)</span>, lang TEXT,
+  model TEXT, graph_version TEXT,
+  tokens_in INT, tokens_out INT, cost NUMERIC(10,5),
+  created_at TIMESTAMPTZ DEFAULT now());
+CREATE INDEX ON content_base_analysis USING ivfflat (embedding vector_cosine_ops);
+
+<span class="c">-- 幂等/重放缓存</span>
+CREATE TABLE <span class="k">enrichment_cache</span>(
+  content_hash TEXT, graph_version TEXT,
+  result JSONB, created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY(content_hash, graph_version));</pre>
+      <div class="callout green"><b>表归属清晰（便于统一）：</b>L1 只<b>写</b> <code>content_base_analysis</code> / <code>enrichment_cache</code>，只<b>读</b> <code>content_items</code>（L0 拥有）。集成时 schema 自然合并，无冲突。</div>
+    </section>
+
+    <!-- E0 -->
+    <section id="e0">
+      <h2><span class="x">E0</span>工程基建 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F0.1</span><span class="ft">包骨架 + enrichment worker</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">建 <code>packages/enrichment_graph</code> 与 <code>workers/enrichment</code>，接 Arq 消费队列。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>包结构 + uv + ruff/mypy/import-lint</li><li>Arq worker 注册 <code>enrich(content_id)</code> 任务</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>lint/type 全绿；入队 enrich 任务能被消费（先空实现）</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>集成：入队 → 断言任务被调用</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F0.2</span><span class="ft">LLM 客户端与多模型路由</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">统一 LLM 接口，按"档位"路由到不同模型；支持 FakeLLM 注入用于测试。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li><code>LLMClient</code> 协议（complete / structured / embed）</li><li><code>ModelRouter</code> 按 tier(cheap/standard/embed) 选模型，读 ConfigKey</li><li><code>FakeLLM</code>（返回预设响应，供测试）</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>切换 tier 路由到对应模型；FakeLLM 可替换真实客户端不改业务代码</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：注入 FakeLLM，断言节点拿到预设响应；路由表断言</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F0.3</span><span class="ft">LangGraph 运行底座</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">StateGraph 装配框架、checkpoint、节点 trace 与计时计费钩子。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>GraphState 基类；节点装饰器（计时/计费/错误捕获）</li><li>trace 输出（LangSmith 或本地 JSON）</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>一个 2 节点示例图可运行并产出每节点耗时/tokens trace</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：跑示例图，断言 trace 含各节点记录</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E1 -->
+    <section id="e1">
+      <h2><span class="x">E1</span>输入接入 + L0 stub <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F1.1</span><span class="ft">ContentProvider 抽象</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">L1 取内容统一经 <code>ContentProvider</code>，屏蔽"真 L0 / stub"差异。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li><code>ContentProvider.get(content_id) -> ContentInput</code></li><li>真实现：调 L0 <code>get_content</code>；stub 实现：读 fixtures</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>业务代码只依赖接口；切换 stub/真实不改图逻辑</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：stub provider 返回 fixture，断言图能消费</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F1.2</span><span class="ft">L0 契约 stub + fixtures</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">提供 standalone 开发用的内容样例（正常/长文/低质/多语言）。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>fixtures：5-10 篇真实风格文章（含超长、营销低质、中/英）</li><li>stub provider 按契约返回</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>不依赖真 L0 即可跑通整条 L1（用 stub）</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>端到端：stub 喂内容 → 图跑通产出产物</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F1.3</span><span class="ft">事件消费</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">订阅 <code>content.ingested</code> → 入队 <code>enrich(content_id)</code>。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>事件消费者 + 幂等（同 content_id 不重复处理）</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>收到事件触发 enrich；重复事件不重复加工</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：发两次同事件，断言只加工一次</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E2 -->
+    <section id="e2">
+      <h2><span class="x">E2</span>管线骨架 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F2.1</span><span class="ft">GraphState 定义</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">定义贯穿全图的状态（content_id/text/lang/中间产物/计费）。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>状态可序列化，节点间正确传递与累积</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：构造 state 跑两节点，断言字段累积</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F2.2</span><span class="ft">图装配 + 入口 enrich()</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">把后续节点按《架构设计》图组装，提供 <code>enrich(content_id)</code> 入口。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>装配 filter→branch→extract→embed→tag→persist 占位节点</li><li>graph_version 标识</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>enrich 端到端跑通（节点先用占位），产出空壳产物</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>端到端 smoke：stub 内容 → enrich → 落产物行</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E3 -->
+    <section id="e3">
+      <h2><span class="x">E3</span>清洗与初评过滤 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F3.1</span><span class="ft">clean_normalize 节点</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">去噪、分段、长度评估，统一文本输入。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>HTML 残留/多余空白被清理；输出长度统计</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：脏文本 → 断言清洗结果与段落数</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F3.2</span><span class="ft">filter 初评节点（小模型）</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">小模型判定低质/营销 → <code>ignore=true</code> 短路，置 CANCELLED 不深加工。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>CO-STAR 风格 prompt（中/英）；结构化输出 {ignore, reason, value}</li><li>命中 ignore → 短路结束 + 状态 CANCELLED</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>明显营销/低质样本被剔除；正常文章通过</li><li>过滤短路不进入后续昂贵节点</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest(FakeLLM)：低质样本断言 CANCELLED；正常样本断言继续</li><li>金标集：过滤准确率 ≥ 阈值</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E4 -->
+    <section id="e4">
+      <h2><span class="x">E4</span>长文分支与分段聚合 <span class="pri p-should">SHOULD</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F4.1</span><span class="ft">长度分支</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">按字符阈值（如 >6000）决定全文 or 分段路径。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>短文走 full、长文走 split，阈值可配</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：长/短样本断言走对分支</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F4.2</span><span class="ft">分段 map + 聚合</span><span class="eff">1.5d</span></div><div class="fb">
+        <p class="fdesc">长文分段 → 并行 analyze_chunk → aggregate 聚合，避免遗漏关键信息。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>语义/长度分段；map 各段分析</li><li>聚合为全文级摘要/观点，去重合并</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>长文聚合结果覆盖各段要点，不遗漏、不重复</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest(FakeLLM)：构造多段内容，断言聚合含每段标志性要点</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E5 -->
+    <section id="e5">
+      <h2><span class="x">E5</span>基础分析抽取 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F5.1</span><span class="ft">结构化抽取</span><span class="eff">1.5d</span></div><div class="fb">
+        <p class="fdesc">产出 one_liner / summary / key_points / quotes / entities，JSON schema 约束。</p>
+        <div class="lbl task">◇ 子任务</div><ul class="subtasks"><li>prompt + 强制 JSON schema 输出（中/英）</li><li>entities 抽取（产品/公司/技术/人物）</li></ul>
+        <div class="box acc"><b>✓ 验收</b><ul><li>产出严格符合 schema；字段非空（除 quotes 可空）；与原文一致不臆造</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：schema 校验 100% 通过；金标抽检准确性</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F5.2</span><span class="ft">校验与降级重试</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">输出不合 schema 时校验失败 → 重试/降级，保证产物结构稳定。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>非法 JSON 触发重试；多次失败有兜底（标记 + 不污染产物）</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest(FakeLLM 返回坏 JSON)：断言重试与最终处理</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E6 -->
+    <section id="e6">
+      <h2><span class="x">E6</span>向量与基础打标 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F6.1</span><span class="ft">Embedding</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc"><code>title + summary</code> → embedding → pgvector。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>向量维度正确写入；相似内容向量邻近</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：两篇相似/不相似内容，断言余弦相似度排序合理</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F6.2</span><span class="ft">语言识别 + 基础标签</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">填 lang + 通用主题/形式标签（<b>与垂直无关</b>）。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>lang 准确；标签来自通用体系，不含垂直专属判断</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：中/英样本断言 lang；标签集 ⊆ 通用词表</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E7 -->
+    <section id="e7">
+      <h2><span class="x">E7</span>持久化与产物契约 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F7.1</span><span class="ft">写 content_base_analysis</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">落产物（含 model/graph_version/tokens/cost），幂等 upsert。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>产物完整入库；重复加工不产生重复行（按 content_id upsert）</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：加工两次断言一行；字段齐全</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F7.2</span><span class="ft">状态推进</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc"><code>WAIT_ANALYSIS → WAIT_SCORE</code>（成功）/ <code>CANCELLED</code>（初评剔除）。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>状态流转符合状态机；非法跃迁被拒</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：成功/剔除两路断言终态正确</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F7.3</span><span class="ft">content.analyzed 事件（outbox）</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">事务内写 outbox，发 <code>content.analyzed</code> 驱动 L2。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>每条完成的内容恰发一次事件，不丢不重</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：完成加工断言 outbox 有事件；relay 后标记已发</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E8 -->
+    <section id="e8">
+      <h2><span class="x">E8</span>模型分级与成本 <span class="pri p-must">MUST</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F8.1</span><span class="ft">模型路由（分档）</span><span class="eff">1d</span></div><div class="fb">
+        <p class="fdesc">filter=小模型、analyze=中端、embed=embedding，档位走 ConfigKey 可切换。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>各节点用对档位模型；改配置即切换，无需改代码</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：断言各节点请求的模型档位正确</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F8.2</span><span class="ft">成本计量与告警</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">记录每篇 tokens/cost，超阈值告警；统计单篇成本指标。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>每篇 cost 入库；日成本可统计；超阈值告警</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：跑 N 篇断言 cost 累计与告警触发</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- E9 -->
+    <section id="e9">
+      <h2><span class="x">E9</span>缓存 / 幂等 / 重放 <span class="pri p-should">SHOULD</span></h2>
+      <div class="feat"><div class="fh"><span class="fid">F9.1</span><span class="ft">enrichment_cache</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">按 <code>(content_hash, graph_version)</code> 缓存，命中直接复用不重花钱。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>相同内容+版本第二次命中缓存，无 LLM 调用</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：同内容跑两次，断言第二次 LLM 调用数=0</li></ul></div>
+      </div></div>
+      <div class="feat"><div class="fh"><span class="fid">F9.2</span><span class="ft">重放（reprocess）</span><span class="eff">0.5d</span></div><div class="fb">
+        <p class="fdesc">消费 <code>content.reprocess</code> 或 graph_version 升级时重跑。</p>
+        <div class="box acc"><b>✓ 验收</b><ul><li>触发重放对历史内容重新加工；版本升级使旧缓存失效</li></ul></div>
+        <div class="box test"><b>⚙ 自测</b><ul><li>pytest：升级 graph_version 后断言重新加工</li></ul></div>
+      </div></div>
+    </section>
+
+    <!-- test strategy -->
+    <section id="teststrategy">
+      <h2><span class="x">✓</span>测试策略</h2>
+      <div class="grid3">
+        <div class="card"><h3 style="margin-top:0">单元测试</h3><ul class="clean"><li>纯函数：清洗、分段、schema 校验、标签映射、成本计算</li><li>无 LLM、无 IO，mock</li><li>覆盖率 ≥ 80%</li></ul></div>
+        <div class="card"><h3 style="margin-top:0">图测试（FakeLLM）</h3><ul class="clean"><li>用 <b>FakeLLM / 录制回放</b> 提供确定性响应</li><li>对 fixture 内容跑整图，断言结构化产物</li><li><b>零成本、可重复</b>，进 CI</li></ul></div>
+        <div class="card"><h3 style="margin-top:0">质量 / 金标</h3><ul class="clean"><li>金标集：人工标注摘要/实体，离线评估准确率</li><li>过滤准确率、抽取覆盖率阈值</li><li>真模型仅离线评估，不进 CI</li></ul></div>
+      </div>
+      <pre><span class="c"># fixtures</span>
+tests/fixtures/content/{normal_en,normal_zh,long,marketing_lowquality}.json
+tests/fixtures/llm/*.json         <span class="c"># FakeLLM 预设响应/cassette</span>
+tests/golden/{slug}.json          <span class="c"># 摘要/实体金标</span>
+<span class="c"># 运行</span>
+uv run pytest -m unit
+uv run pytest -m graph             <span class="c"># FakeLLM，确定性</span>
+uv run pytest --cov=enrichment_graph</pre>
+      <div class="callout amber"><b>关键：LLM 节点必须可确定性测试。</b>用 FakeLLM 注入预设响应（或录制真实响应回放），让 CI <b>不真调模型、不花钱、结果稳定</b>。真模型质量用离线金标集单独评估。</div>
+    </section>
+
+    <section id="dod">
+      <h2><span class="x">★</span>L1 总验收（Definition of Done）</h2>
+      <div class="card">
+        <ul class="clean">
+          <li><strong>独立可跑</strong>：用 L0 stub + fixtures，无需真 L0 即可端到端跑通并验收</li>
+          <li><strong>初评</strong>：低质/营销内容被正确剔除（CANCELLED），不进深加工</li>
+          <li><strong>抽取</strong>：one_liner/summary/key_points/quotes/entities 严格符合 schema、与原文一致</li>
+          <li><strong>长文</strong>：分段聚合不遗漏要点</li>
+          <li><strong>向量/标签</strong>：embedding 入 pgvector，标签与垂直无关</li>
+          <li><strong>产物契约</strong>：content_base_analysis 完整；content.analyzed 不丢不重；状态正确流转</li>
+          <li><strong>成本</strong>：模型分级生效，单篇成本可控、可统计、超阈告警</li>
+          <li><strong>幂等/重放</strong>：缓存命中省成本；版本升级可重放</li>
+          <li><strong>质量</strong>：单元+图测试覆盖率达标，CI 全绿（不真调模型）</li>
+        </ul>
+      </div>
+      <div class="callout green"><b>达成即：</b>L1 可作为独立、确定性可测、成本可控的内容加工服务，向 L2 稳定供给"内容知识"。集成时仅把 ContentProvider 从 stub 换成真 L0。</div>
+    </section>
+
+    <section id="risk">
+      <h2><span class="x">!</span>风险与依赖</h2>
+      <table>
+        <thead><tr><th>风险/依赖</th><th>应对</th></tr></thead>
+        <tbody>
+          <tr><td>L0 尚未完成（并行开发）</td><td>ContentProvider stub + fixtures，L1 独立开发验收</td></tr>
+          <tr><td>LLM 结构化输出不稳定</td><td>JSON schema 强约束 + 校验 + 重试/降级</td></tr>
+          <tr><td>LLM 测试不确定/花钱</td><td>FakeLLM/录制回放，CI 不真调；金标离线评估</td></tr>
+          <tr><td>成本超预算</td><td>小模型初筛短路 + 缓存 + 并发限流 + 告警</td></tr>
+          <tr><td>长文遗漏</td><td>分段 map-reduce 聚合 + 覆盖率金标</td></tr>
+          <tr><td>集成时契约漂移</td><td>固定输入/输出契约 + 契约测试（schema 校验）</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><b>配套：</b>开工细节（脚手架/接口签名/执行清单/冒烟）见《L1 实施手册-交付包》。</div>
+    </section>
+
+    <div class="foot">L1 数据加工 · 详尽开发 Plan · 10 EPIC / ~30 小功能 / 含验收与自测 · 可对 L0 stub 独立开发 · CodePick 分层平台 · 2026-05-30</div>
+  </main>
+</div>
+</body>
+</html>
