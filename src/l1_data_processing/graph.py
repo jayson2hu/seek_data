@@ -79,6 +79,107 @@ def branch_by_length_node(state: GraphState, *, config: GraphConfig) -> GraphSta
     return state
 
 
+def split_text_into_chunks(text: str, *, chunk_size_chars: int, overlap_chars: int) -> list[str]:
+    if chunk_size_chars <= 0:
+        raise ValueError("chunk_size_chars must be positive")
+    if overlap_chars < 0 or overlap_chars >= chunk_size_chars:
+        raise ValueError("overlap_chars must be non-negative and smaller than chunk_size_chars")
+
+    chunks: list[str] = []
+    start = 0
+    while start < len(text):
+        end = min(start + chunk_size_chars, len(text))
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end == len(text):
+            break
+        start = end - overlap_chars
+    return chunks
+
+
+def analyze_chunk_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, config: GraphConfig) -> GraphState:
+    if state.route != "split":
+        return state
+    if not state.text:
+        raise ValueError("text must be present before chunk analysis")
+
+    chunks = split_text_into_chunks(
+        state.text,
+        chunk_size_chars=config.chunk_size_chars,
+        overlap_chars=config.chunk_overlap_chars,
+    )
+    chunk_results: list[dict[str, object]] = []
+    analysis_model = router.model_for("standard")
+    for index, chunk in enumerate(chunks):
+        started = perf_counter()
+        response = llm.structured(
+            f"Analyze chunk {index + 1}/{len(chunks)} for content_id={state.content_id}.\n\n{chunk}",
+            schema_name="ChunkAnalysis",
+            model=analysis_model,
+        )
+        chunk_results.append(response.data)
+        state.add_trace(
+            UsageTrace(
+                node=f"analyze_chunk:{index}",
+                model=analysis_model,
+                prompt_tokens=response.prompt_tokens,
+                completion_tokens=response.completion_tokens,
+                elapsed_ms=int((perf_counter() - started) * 1000),
+            )
+        )
+
+    state.intermediate["chunks"] = chunks
+    state.intermediate["chunk_analyses"] = chunk_results
+    state.status = "CHUNKS_ANALYZED"
+    return state
+
+
+def aggregate_chunks_node(state: GraphState) -> GraphState:
+    if state.route != "split":
+        return state
+    chunk_results = state.intermediate.get("chunk_analyses")
+    if not isinstance(chunk_results, list) or not chunk_results:
+        raise ValueError("chunk analyses are required before aggregation")
+
+    key_points: list[str] = []
+    quotes: list[str] = []
+    entities: list[str] = []
+    base_tags: list[str] = []
+    summaries: list[str] = []
+    for result in chunk_results:
+        if not isinstance(result, dict):
+            raise ValueError("chunk analysis must be a dictionary")
+        summaries.append(str(result.get("summary", "")).strip())
+        key_points.extend(str(item).strip() for item in result.get("key_points", []) if str(item).strip())
+        quotes.extend(str(item).strip() for item in result.get("quotes", []) if str(item).strip())
+        entities.extend(str(item).strip() for item in result.get("entities", []) if str(item).strip())
+        base_tags.extend(str(item).strip() for item in result.get("base_tags", []) if str(item).strip())
+
+    def dedupe(values: list[str]) -> list[str]:
+        seen: set[str] = set()
+        output: list[str] = []
+        for value in values:
+            key = value.casefold()
+            if key not in seen:
+                seen.add(key)
+                output.append(value)
+        return output
+
+    deduped_points = dedupe(key_points)
+    deduped_summaries = dedupe([summary for summary in summaries if summary])
+    state.intermediate["base_analysis"] = {
+        "one_liner": deduped_points[0] if deduped_points else "Aggregated long-form analysis",
+        "summary": " ".join(deduped_summaries).strip() or "Aggregated long-form summary.",
+        "key_points": deduped_points,
+        "quotes": dedupe(quotes),
+        "entities": dedupe(entities),
+        "base_tags": dedupe(base_tags) or ["long-form"],
+    }
+    state.status = "AGGREGATED"
+    return state
+
+
 def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
     if state.content is None or not state.text:
         raise ValueError("content must be loaded before base analysis")
@@ -167,7 +268,11 @@ def enrich(
     if state.status == "CANCELLED":
         return state
     state = branch_by_length_node(state, config=config)
-    state = base_analysis_node(state, llm=llm, router=router)
+    if state.route == "split":
+        state = analyze_chunk_node(state, llm=llm, router=router, config=config)
+        state = aggregate_chunks_node(state)
+    else:
+        state = base_analysis_node(state, llm=llm, router=router)
     state = embedding_node(state, llm=llm, router=router)
     return persist_placeholder_node(state)
 

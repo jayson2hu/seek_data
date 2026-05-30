@@ -55,3 +55,9 @@
 - Status: done
 - Evidence: `GraphConfig`, `branch_by_length_node`, and `tests/test_length_branch.py`.
 - Acceptance: short content routes to `full`, long content routes to `split`, and the threshold is configurable.
+
+### F4.2 Chunk Map + Aggregate
+
+- Status: done
+- Evidence: `split_text_into_chunks`, `analyze_chunk_node`, `aggregate_chunks_node`, FakeLLM sequenced responses, and `tests/test_chunk_aggregation.py`.
+- Acceptance: long content is split into chunks, each chunk is analyzed deterministically, and aggregation preserves each chunk's marker key point without duplicates.
