@@ -240,19 +240,34 @@ def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter
     return state
 
 
-def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
-    if not state.text:
-        raise ValueError("text must be present before embedding")
+def embedding_input_text(state: GraphState) -> str:
+    if state.content is None:
+        raise ValueError("content must be loaded before embedding")
+    data = state.intermediate.get("base_analysis")
+    if not isinstance(data, dict):
+        raise ValueError("base analysis data must be present before embedding")
+    summary = data.get("summary")
+    if not isinstance(summary, str) or not summary.strip():
+        raise ValueError("summary must be present before embedding")
+    return f"{state.content.title}\n\n{summary.strip()}"
+
+
+def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, config: GraphConfig | None = None) -> GraphState:
+    config = config or GraphConfig()
+    embed_text = embedding_input_text(state)
 
     started = perf_counter()
     embed_model = router.model_for("embed")
-    embedding = llm.embed(state.text, model=embed_model)
+    embedding = llm.embed(embed_text, model=embed_model)
+    if len(embedding) != config.embedding_dimensions:
+        raise ValueError(f"embedding dimension mismatch: expected {config.embedding_dimensions}, got {len(embedding)}")
     state.intermediate["embedding"] = embedding
+    state.intermediate["embedding_input"] = embed_text
     state.add_trace(
         UsageTrace(
             node="embedding",
             model=embed_model,
-            prompt_tokens=len(state.text.split()),
+            prompt_tokens=len(embed_text.split()),
             completion_tokens=0,
             elapsed_ms=int((perf_counter() - started) * 1000),
         )
@@ -306,7 +321,7 @@ def enrich(
         state = base_analysis_node(state, llm=llm, router=router, config=config)
         if state.status == "FAILED":
             return state
-    state = embedding_node(state, llm=llm, router=router)
+    state = embedding_node(state, llm=llm, router=router, config=config)
     return persist_placeholder_node(state)
 
 

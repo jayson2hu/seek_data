@@ -23,6 +23,7 @@ def test_graph_state_serializes_and_accumulates_across_nodes() -> None:
     assert serialized["content"]["content_id"] == "demo-article"
     assert serialized["intermediate"]["base_analysis"]["one_liner"]
     assert len(serialized["intermediate"]["embedding"]) == 8
+    assert "L1 standalone data processing fixture" in serialized["intermediate"]["embedding_input"]
     assert [trace["node"] for trace in serialized["traces"]] == ["base_analysis:attempt:1", "embedding"]
     assert serialized["cost"]["prompt_tokens"] > 0
 

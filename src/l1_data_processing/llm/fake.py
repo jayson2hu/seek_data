@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import math
+import re
 from collections import defaultdict
 from copy import deepcopy
 from typing import Any
 
 from l1_data_processing.llm.client import LLMResponse
+
+
+TOKEN_RE = re.compile(r"[\w\u4e00-\u9fff]+", re.UNICODE)
 
 
 class FakeLLM:
@@ -50,5 +55,12 @@ class FakeLLM:
 
     def embed(self, text: str, *, model: str) -> list[float]:
         self.calls["embed"] += 1
-        digest = hashlib.sha256(f"{model}:{text}".encode("utf-8")).digest()
-        return [round(byte / 255, 6) for byte in digest[: self.embedding_dimensions]]
+        vector = [0.0 for _ in range(self.embedding_dimensions)]
+        tokens = TOKEN_RE.findall(text.casefold())
+        for token in tokens:
+            digest = hashlib.sha256(f"{model}:{token}".encode("utf-8")).digest()
+            index = digest[0] % self.embedding_dimensions
+            sign = 1.0 if digest[1] % 2 == 0 else -1.0
+            vector[index] += sign
+        magnitude = math.sqrt(sum(value * value for value in vector)) or 1.0
+        return [round(value / magnitude, 6) for value in vector]

@@ -9,6 +9,7 @@ class GraphConfig:
     chunk_size_chars: int = 2500
     chunk_overlap_chars: int = 200
     structured_max_attempts: int = 2
+    embedding_dimensions: int = 8
 
     def __post_init__(self) -> None:
         if self.split_threshold_chars <= 0:
@@ -21,3 +22,5 @@ class GraphConfig:
             raise ValueError("chunk_overlap_chars must be smaller than chunk_size_chars")
         if self.structured_max_attempts <= 0:
             raise ValueError("structured_max_attempts must be positive")
+        if self.embedding_dimensions <= 0:
+            raise ValueError("embedding_dimensions must be positive")

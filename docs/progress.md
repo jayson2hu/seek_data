@@ -73,3 +73,9 @@
 - Status: done
 - Evidence: `request_valid_structured`, `GraphConfig.structured_max_attempts`, and `tests/test_structured_retry.py`.
 - Acceptance: invalid structured payloads trigger retry; repeated failures mark state `FAILED`, record schema errors, skip embedding/persistence, and do not create a polluted `BaseAnalysis`.
+
+### F6.1 Embedding
+
+- Status: done
+- Evidence: `embedding_input_text`, dimension validation in `embedding_node`, stable FakeLLM bag-of-words embeddings, and `tests/test_embedding.py`.
+- Acceptance: embeddings are generated from `title + summary`, dimension mismatches fail fast, and similar content ranks closer than unrelated content by cosine similarity.
