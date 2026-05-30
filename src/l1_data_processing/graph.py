@@ -7,6 +7,7 @@ from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
+from l1_data_processing.persistence import ContentBaseAnalysisRecord, ContentBaseAnalysisRepository
 from l1_data_processing.schema import SchemaValidationError, build_base_analysis, validate_base_analysis_payload
 from l1_data_processing.state import GraphState
 from l1_data_processing.tagging import detect_language, infer_general_tags
@@ -292,7 +293,7 @@ def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, co
     return state
 
 
-def persist_placeholder_node(state: GraphState) -> GraphState:
+def persist_placeholder_node(state: GraphState, *, repository: ContentBaseAnalysisRepository | None = None) -> GraphState:
     if state.content is None:
         raise ValueError("content must be loaded before persistence")
     data = state.intermediate.get("base_analysis")
@@ -308,6 +309,23 @@ def persist_placeholder_node(state: GraphState) -> GraphState:
         lang=state.lang,
     )
     state.analysis = analysis
+    if repository is not None:
+        model_names = []
+        seen: set[str] = set()
+        for trace in state.traces:
+            if trace.model not in seen:
+                seen.add(trace.model)
+                model_names.append(trace.model)
+        record = ContentBaseAnalysisRecord(
+            content_id=analysis.content_id,
+            analysis=analysis,
+            graph_version=state.graph_version,
+            prompt_tokens=state.cost["prompt_tokens"],
+            completion_tokens=state.cost["completion_tokens"],
+            cost_units=state.cost["prompt_tokens"] + state.cost["completion_tokens"],
+            model_names=model_names,
+        )
+        state.intermediate["content_base_analysis_record"] = repository.upsert(record).to_dict()
     state.status = "COMPLETED"
     return state
 
@@ -319,6 +337,7 @@ def enrich(
     llm: LLMClient,
     router: ModelRouter | None = None,
     config: GraphConfig | None = None,
+    repository: ContentBaseAnalysisRepository | None = None,
 ) -> GraphState:
     router = router or ModelRouter()
     config = config or GraphConfig()
@@ -340,7 +359,7 @@ def enrich(
             return state
     state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
-    return persist_placeholder_node(state)
+    return persist_placeholder_node(state, repository=repository)
 
 
 def run_enrichment(
@@ -350,8 +369,9 @@ def run_enrichment(
     llm: LLMClient,
     router: ModelRouter | None = None,
     config: GraphConfig | None = None,
+    repository: ContentBaseAnalysisRepository | None = None,
 ) -> BaseAnalysis:
-    state = enrich(content_id, provider=provider, llm=llm, router=router, config=config)
+    state = enrich(content_id, provider=provider, llm=llm, router=router, config=config, repository=repository)
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
     return state.analysis

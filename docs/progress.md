@@ -85,3 +85,9 @@
 - Status: done
 - Evidence: `l1_data_processing.tagging`, `language_and_tags_node`, `BaseAnalysis.lang`, and `tests/test_tagging.py`.
 - Acceptance: Chinese and English samples are classified as `zh`/`en`; base tags are normalized to a general controlled vocabulary and vertical-specific tags are filtered out.
+
+### F7.1 Write content_base_analysis
+
+- Status: done
+- Evidence: `ContentBaseAnalysisRecord`, `InMemoryContentBaseAnalysisRepository`, repository injection in `enrich`, and `tests/test_persistence.py`.
+- Acceptance: completed artifacts are persisted with graph version, model names, token/cost fields, and repeated processing upserts by `content_id` without duplicate rows.
