@@ -133,3 +133,9 @@
 - Status: done
 - Evidence: `l1_data_processing.dod`, upgraded `l1_data_processing.smoke`, `make l1-dod`, and `tests/test_dod.py`.
 - Acceptance: one command verifies standalone execution, cache hit, reprocess, filter cancellation, long-content split, persistence/outbox/status/cost side effects, and prints `L1 DOD: PASS`.
+
+### Final Documentation
+
+- Status: done
+- Evidence: `docs/issues.md` and `docs/acceptance.md`.
+- Acceptance: development issues are recorded with resolutions, and final acceptance evidence lists reproducible commands, latest results, DoD coverage, and integration notes.
