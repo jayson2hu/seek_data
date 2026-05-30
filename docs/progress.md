@@ -25,3 +25,15 @@
 - Status: done
 - Evidence: `l1_data_processing.graph`, `l1_data_processing.smoke`, and `tests/test_graph_smoke.py`.
 - Acceptance: standalone stub + fake LLM path produces a schema-valid `BaseAnalysis` and smoke prints `L1 PIPELINE: PASS`.
+
+### F2.1 GraphState Definition
+
+- Status: done
+- Evidence: `l1_data_processing.state.GraphState` and `tests/test_graph_state.py`.
+- Acceptance: state serializes to plain dictionaries and accumulates traces/token cost across nodes.
+
+### F2.2 Graph Assembly + enrich()
+
+- Status: done
+- Evidence: `l1_data_processing.graph.enrich` plus explicit load, analysis, embedding, and placeholder persistence nodes.
+- Acceptance: `enrich(content_id)` runs the standalone path end to end and returns a completed `GraphState` with a valid analysis artifact.

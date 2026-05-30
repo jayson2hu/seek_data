@@ -27,6 +27,15 @@ class UsageTrace:
     completion_tokens: int
     elapsed_ms: int
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "node": self.node,
+            "model": self.model,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "elapsed_ms": self.elapsed_ms,
+        }
+
 
 @dataclass(frozen=True)
 class BaseAnalysis:
@@ -55,3 +64,18 @@ class BaseAnalysis:
             raise ValueError("base_tags must not be empty")
         if not self.embedding:
             raise ValueError("embedding must not be empty")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "content_id": self.content_id,
+            "one_liner": self.one_liner,
+            "summary": self.summary,
+            "key_points": self.key_points,
+            "quotes": self.quotes,
+            "entities": self.entities,
+            "base_tags": self.base_tags,
+            "embedding": self.embedding,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+            "traces": [trace.to_dict() for trace in self.traces],
+        }

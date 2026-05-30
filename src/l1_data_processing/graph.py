@@ -6,52 +6,99 @@ from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
+from l1_data_processing.state import GraphState
 
 
-def run_enrichment(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> BaseAnalysis:
-    router = router or ModelRouter()
-    content = provider.get(content_id)
-    text = content.normalized_text()
+def load_content_node(state: GraphState, *, provider: ContentProvider) -> GraphState:
+    content = provider.get(state.content_id)
+    state.content = content
+    state.text = content.normalized_text()
+    state.status = "CONTENT_LOADED"
+    return state
+
+
+def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
+    if state.content is None or not state.text:
+        raise ValueError("content must be loaded before base analysis")
 
     started = perf_counter()
     analysis_model = router.model_for("standard")
     response = llm.structured(
-        f"Create BaseAnalysis for content_id={content.content_id}\n\n{text}",
+        f"Create BaseAnalysis for content_id={state.content.content_id}\n\n{state.text}",
         schema_name="BaseAnalysis",
         model=analysis_model,
     )
-    analysis_elapsed = int((perf_counter() - started) * 1000)
+    state.intermediate["base_analysis"] = response.data
+    state.add_trace(
+        UsageTrace(
+            node="base_analysis",
+            model=analysis_model,
+            prompt_tokens=response.prompt_tokens,
+            completion_tokens=response.completion_tokens,
+            elapsed_ms=int((perf_counter() - started) * 1000),
+        )
+    )
+    state.status = "ANALYZED"
+    return state
+
+
+def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
+    if not state.text:
+        raise ValueError("text must be present before embedding")
 
     started = perf_counter()
     embed_model = router.model_for("embed")
-    embedding = llm.embed(text, model=embed_model)
-    embed_elapsed = int((perf_counter() - started) * 1000)
+    embedding = llm.embed(state.text, model=embed_model)
+    state.intermediate["embedding"] = embedding
+    state.add_trace(
+        UsageTrace(
+            node="embedding",
+            model=embed_model,
+            prompt_tokens=len(state.text.split()),
+            completion_tokens=0,
+            elapsed_ms=int((perf_counter() - started) * 1000),
+        )
+    )
+    state.status = "EMBEDDED"
+    return state
+
+
+def persist_placeholder_node(state: GraphState) -> GraphState:
+    if state.content is None:
+        raise ValueError("content must be loaded before persistence")
+    data = state.intermediate.get("base_analysis")
+    embedding = state.intermediate.get("embedding")
+    if not isinstance(data, dict) or not isinstance(embedding, list):
+        raise ValueError("analysis data and embedding are required before persistence")
 
     analysis = BaseAnalysis(
-        content_id=content.content_id,
-        one_liner=str(response.data["one_liner"]),
-        summary=str(response.data["summary"]),
-        key_points=list(response.data["key_points"]),
-        quotes=list(response.data.get("quotes", [])),
-        entities=list(response.data.get("entities", [])),
-        base_tags=list(response.data["base_tags"]),
+        content_id=state.content.content_id,
+        one_liner=str(data["one_liner"]),
+        summary=str(data["summary"]),
+        key_points=list(data["key_points"]),
+        quotes=list(data.get("quotes", [])),
+        entities=list(data.get("entities", [])),
+        base_tags=list(data["base_tags"]),
         embedding=embedding,
-        traces=[
-            UsageTrace(
-                node="base_analysis",
-                model=analysis_model,
-                prompt_tokens=response.prompt_tokens,
-                completion_tokens=response.completion_tokens,
-                elapsed_ms=analysis_elapsed,
-            ),
-            UsageTrace(
-                node="embedding",
-                model=embed_model,
-                prompt_tokens=len(text.split()),
-                completion_tokens=0,
-                elapsed_ms=embed_elapsed,
-            ),
-        ],
+        traces=list(state.traces),
     )
     analysis.validate()
-    return analysis
+    state.analysis = analysis
+    state.status = "COMPLETED"
+    return state
+
+
+def enrich(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> GraphState:
+    router = router or ModelRouter()
+    state = GraphState(content_id=content_id)
+    state = load_content_node(state, provider=provider)
+    state = base_analysis_node(state, llm=llm, router=router)
+    state = embedding_node(state, llm=llm, router=router)
+    return persist_placeholder_node(state)
+
+
+def run_enrichment(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> BaseAnalysis:
+    state = enrich(content_id, provider=provider, llm=llm, router=router)
+    if state.analysis is None:
+        raise ValueError("enrichment finished without analysis")
+    return state.analysis
