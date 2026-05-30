@@ -3,6 +3,7 @@ from __future__ import annotations
 from time import perf_counter
 
 from l1_data_processing.config import GraphConfig
+from l1_data_processing.costing import CostLedger, summarize_trace_cost
 from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.events import Outbox, content_analyzed_event
 from l1_data_processing.input.provider import ContentProvider
@@ -301,9 +302,12 @@ def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, co
 def persist_placeholder_node(
     state: GraphState,
     *,
+    config: GraphConfig | None = None,
     repository: ContentBaseAnalysisRepository | None = None,
     outbox: Outbox | None = None,
+    cost_ledger: CostLedger | None = None,
 ) -> GraphState:
+    config = config or GraphConfig()
     if state.content is None:
         raise ValueError("content must be loaded before persistence")
     data = state.intermediate.get("base_analysis")
@@ -344,6 +348,21 @@ def persist_placeholder_node(
             "aggregate_id": event.aggregate_id,
             "sent_at": event.sent_at.isoformat() if event.sent_at else None,
         }
+    if cost_ledger is not None:
+        cost_record = summarize_trace_cost(
+            analysis.content_id,
+            graph_version=state.graph_version,
+            traces=state.traces,
+            alert_threshold=config.cost_alert_threshold_units,
+        )
+        cost_ledger.record(cost_record)
+        state.intermediate["cost_record"] = {
+            "content_id": cost_record.content_id,
+            "prompt_tokens": cost_record.prompt_tokens,
+            "completion_tokens": cost_record.completion_tokens,
+            "cost_units": cost_record.cost_units,
+            "alert": cost_record.alert,
+        }
     state.status = "COMPLETED"
     state.content_status = WAIT_SCORE
     return state
@@ -368,6 +387,7 @@ def enrich(
     repository: ContentBaseAnalysisRepository | None = None,
     status_machine: ContentStatusMachine | None = None,
     outbox: Outbox | None = None,
+    cost_ledger: CostLedger | None = None,
 ) -> GraphState:
     config = config or GraphConfig()
     router = router or ModelRouter(config.model_tiers)
@@ -389,7 +409,7 @@ def enrich(
             return apply_content_status(state, status_machine=status_machine)
     state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
-    state = persist_placeholder_node(state, repository=repository, outbox=outbox)
+    state = persist_placeholder_node(state, config=config, repository=repository, outbox=outbox, cost_ledger=cost_ledger)
     return apply_content_status(state, status_machine=status_machine)
 
 
@@ -403,6 +423,7 @@ def run_enrichment(
     repository: ContentBaseAnalysisRepository | None = None,
     status_machine: ContentStatusMachine | None = None,
     outbox: Outbox | None = None,
+    cost_ledger: CostLedger | None = None,
 ) -> BaseAnalysis:
     state = enrich(
         content_id,
@@ -413,6 +434,7 @@ def run_enrichment(
         repository=repository,
         status_machine=status_machine,
         outbox=outbox,
+        cost_ledger=cost_ledger,
     )
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")

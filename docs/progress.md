@@ -109,3 +109,9 @@
 - Status: done
 - Evidence: `GraphConfig.model_tiers`, `ModelRouter(config.model_tiers)` in `enrich`, and `tests/test_model_routing.py`.
 - Acceptance: filter, analysis, and embedding nodes use their configured model tiers; changing configuration switches models without graph code changes.
+
+### F8.2 Cost Metering and Alerts
+
+- Status: done
+- Evidence: `CostRecord`, `InMemoryCostLedger`, `summarize_trace_cost`, cost ledger injection in `enrich`, and `tests/test_costing.py`.
+- Acceptance: each completed content records prompt/completion token cost, daily cost is aggregatable, and records exceeding `GraphConfig.cost_alert_threshold_units` produce alerts.

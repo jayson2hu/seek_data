@@ -10,6 +10,7 @@ class GraphConfig:
     chunk_overlap_chars: int = 200
     structured_max_attempts: int = 2
     embedding_dimensions: int = 8
+    cost_alert_threshold_units: int = 1000
     model_tiers: dict[str, str] = field(
         default_factory=lambda: {
             "cheap": "fake-cheap",
@@ -31,6 +32,8 @@ class GraphConfig:
             raise ValueError("structured_max_attempts must be positive")
         if self.embedding_dimensions <= 0:
             raise ValueError("embedding_dimensions must be positive")
+        if self.cost_alert_threshold_units <= 0:
+            raise ValueError("cost_alert_threshold_units must be positive")
         for required_tier in ("cheap", "standard", "embed"):
             if required_tier not in self.model_tiers or not self.model_tiers[required_tier]:
                 raise ValueError(f"model_tiers must define {required_tier}")
