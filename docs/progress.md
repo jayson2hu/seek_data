@@ -97,3 +97,9 @@
 - Status: done
 - Evidence: `ContentStatusMachine`, status integration in `enrich`, and `tests/test_status_machine.py`.
 - Acceptance: success transitions `WAIT_ANALYSIS -> WAIT_SCORE`, filtered content transitions `WAIT_ANALYSIS -> CANCELLED`, and illegal transitions from terminal states are rejected.
+
+### F7.3 content.analyzed Outbox
+
+- Status: done
+- Evidence: `OutboxEvent`, `InMemoryOutbox`, `content_analyzed_event`, outbox injection in `enrich`, and `tests/test_outbox.py`.
+- Acceptance: completed content writes exactly one `content.analyzed` event by content_id, repeated processing is idempotent, relay marks events as sent, and cancelled content does not emit analyzed events.

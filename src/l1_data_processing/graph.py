@@ -4,6 +4,7 @@ from time import perf_counter
 
 from l1_data_processing.config import GraphConfig
 from l1_data_processing.contracts import BaseAnalysis, UsageTrace
+from l1_data_processing.events import Outbox, content_analyzed_event
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
@@ -297,7 +298,12 @@ def embedding_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, co
     return state
 
 
-def persist_placeholder_node(state: GraphState, *, repository: ContentBaseAnalysisRepository | None = None) -> GraphState:
+def persist_placeholder_node(
+    state: GraphState,
+    *,
+    repository: ContentBaseAnalysisRepository | None = None,
+    outbox: Outbox | None = None,
+) -> GraphState:
     if state.content is None:
         raise ValueError("content must be loaded before persistence")
     data = state.intermediate.get("base_analysis")
@@ -330,6 +336,14 @@ def persist_placeholder_node(state: GraphState, *, repository: ContentBaseAnalys
             model_names=model_names,
         )
         state.intermediate["content_base_analysis_record"] = repository.upsert(record).to_dict()
+    if outbox is not None:
+        event = outbox.add_once(content_analyzed_event(analysis, graph_version=state.graph_version))
+        state.intermediate["content_analyzed_event"] = {
+            "event_id": event.event_id,
+            "topic": event.topic,
+            "aggregate_id": event.aggregate_id,
+            "sent_at": event.sent_at.isoformat() if event.sent_at else None,
+        }
     state.status = "COMPLETED"
     state.content_status = WAIT_SCORE
     return state
@@ -353,6 +367,7 @@ def enrich(
     config: GraphConfig | None = None,
     repository: ContentBaseAnalysisRepository | None = None,
     status_machine: ContentStatusMachine | None = None,
+    outbox: Outbox | None = None,
 ) -> GraphState:
     router = router or ModelRouter()
     config = config or GraphConfig()
@@ -374,7 +389,7 @@ def enrich(
             return apply_content_status(state, status_machine=status_machine)
     state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
-    state = persist_placeholder_node(state, repository=repository)
+    state = persist_placeholder_node(state, repository=repository, outbox=outbox)
     return apply_content_status(state, status_machine=status_machine)
 
 
@@ -387,6 +402,7 @@ def run_enrichment(
     config: GraphConfig | None = None,
     repository: ContentBaseAnalysisRepository | None = None,
     status_machine: ContentStatusMachine | None = None,
+    outbox: Outbox | None = None,
 ) -> BaseAnalysis:
     state = enrich(
         content_id,
@@ -396,6 +412,7 @@ def run_enrichment(
         config=config,
         repository=repository,
         status_machine=status_machine,
+        outbox=outbox,
     )
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
