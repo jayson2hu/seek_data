@@ -49,10 +49,11 @@ def test_build_base_analysis_requires_numeric_embedding() -> None:
 def test_build_base_analysis_returns_contract_object() -> None:
     trace = UsageTrace("node", "model", 1, 2, 3)
 
-    analysis = build_base_analysis(content_id="cid", payload=VALID_PAYLOAD, embedding=[0.1, 0.2], traces=[trace])
+    analysis = build_base_analysis(content_id="cid", payload=VALID_PAYLOAD, embedding=[0.1, 0.2], traces=[trace], lang="en")
 
     assert analysis.content_id == "cid"
     assert analysis.one_liner == "A concise claim."
     assert analysis.quotes == []
     assert analysis.embedding == [0.1, 0.2]
+    assert analysis.lang == "en"
     assert analysis.traces == [trace]

@@ -49,6 +49,7 @@ def build_base_analysis(
     payload: dict[str, Any],
     embedding: list[float],
     traces: list[UsageTrace],
+    lang: str | None = None,
 ) -> BaseAnalysis:
     if not content_id.strip():
         raise SchemaValidationError("content_id is required")
@@ -67,6 +68,7 @@ def build_base_analysis(
         entities=normalized["entities"],
         base_tags=normalized["base_tags"],
         embedding=[float(value) for value in embedding],
+        lang=lang,
         traces=traces,
     )
     analysis.validate()

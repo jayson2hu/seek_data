@@ -79,3 +79,9 @@
 - Status: done
 - Evidence: `embedding_input_text`, dimension validation in `embedding_node`, stable FakeLLM bag-of-words embeddings, and `tests/test_embedding.py`.
 - Acceptance: embeddings are generated from `title + summary`, dimension mismatches fail fast, and similar content ranks closer than unrelated content by cosine similarity.
+
+### F6.2 Language Detection + Base Tags
+
+- Status: done
+- Evidence: `l1_data_processing.tagging`, `language_and_tags_node`, `BaseAnalysis.lang`, and `tests/test_tagging.py`.
+- Acceptance: Chinese and English samples are classified as `zh`/`en`; base tags are normalized to a general controlled vocabulary and vertical-specific tags are filtered out.

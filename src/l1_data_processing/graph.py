@@ -9,6 +9,7 @@ from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
 from l1_data_processing.schema import SchemaValidationError, build_base_analysis, validate_base_analysis_payload
 from l1_data_processing.state import GraphState
+from l1_data_processing.tagging import detect_language, infer_general_tags
 from l1_data_processing.text import clean_normalize_text
 
 
@@ -219,6 +220,21 @@ def aggregate_chunks_node(state: GraphState) -> GraphState:
     return state
 
 
+def language_and_tags_node(state: GraphState) -> GraphState:
+    data = state.intermediate.get("base_analysis")
+    if not isinstance(data, dict):
+        raise ValueError("base analysis data must be present before language and tags")
+    state.lang = detect_language(state.text)
+    tags = infer_general_tags(
+        f"{state.text}\n{data.get('summary', '')}\n{' '.join(str(item) for item in data.get('key_points', []))}",
+        existing_tags=[str(tag) for tag in data.get("base_tags", [])],
+    )
+    data["base_tags"] = tags
+    state.intermediate["language_tags"] = {"lang": state.lang, "base_tags": tags}
+    state.status = "TAGGED"
+    return state
+
+
 def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, config: GraphConfig) -> GraphState:
     if state.content is None or not state.text:
         raise ValueError("content must be loaded before base analysis")
@@ -289,6 +305,7 @@ def persist_placeholder_node(state: GraphState) -> GraphState:
         payload=data,
         embedding=embedding,
         traces=list(state.traces),
+        lang=state.lang,
     )
     state.analysis = analysis
     state.status = "COMPLETED"
@@ -321,6 +338,7 @@ def enrich(
         state = base_analysis_node(state, llm=llm, router=router, config=config)
         if state.status == "FAILED":
             return state
+    state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
     return persist_placeholder_node(state)
 

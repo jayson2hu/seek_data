@@ -47,6 +47,7 @@ class BaseAnalysis:
     entities: list[str]
     base_tags: list[str]
     embedding: list[float]
+    lang: str | None = None
     status: str = "COMPLETED"
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     traces: list[UsageTrace] = field(default_factory=list)
@@ -75,6 +76,7 @@ class BaseAnalysis:
             "entities": self.entities,
             "base_tags": self.base_tags,
             "embedding": self.embedding,
+            "lang": self.lang,
             "status": self.status,
             "created_at": self.created_at.isoformat(),
             "traces": [trace.to_dict() for trace in self.traces],
