@@ -121,3 +121,9 @@
 - Status: done
 - Evidence: `EnrichmentCacheEntry`, `InMemoryEnrichmentCache`, content hash cache lookup/store in `enrich`, and `tests/test_enrichment_cache.py`.
 - Acceptance: identical normalized content with the same graph version hits cache on the second run and performs zero LLM calls while still returning a completed analysis.
+
+### F9.2 Reprocess and Version Invalidation
+
+- Status: done
+- Evidence: `graph_version` and `reprocess` inputs on `enrich`, reprocess cache bypass, versioned cache keys, and `tests/test_enrichment_cache.py`.
+- Acceptance: upgrading graph version creates a new cache key and reruns processing; explicit reprocess bypasses same-version cache and reruns LLM work.

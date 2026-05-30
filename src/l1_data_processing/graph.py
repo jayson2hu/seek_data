@@ -54,6 +54,11 @@ def cache_lookup_node(state: GraphState, *, cache: EnrichmentCache | None = None
     return state
 
 
+def force_reprocess_node(state: GraphState) -> GraphState:
+    state.intermediate["cache"] = {"hit": False, "bypassed": True}
+    return state
+
+
 def filter_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
     if not state.text:
         raise ValueError("text must be present before filter")
@@ -430,13 +435,21 @@ def enrich(
     outbox: Outbox | None = None,
     cost_ledger: CostLedger | None = None,
     cache: EnrichmentCache | None = None,
+    graph_version: str | None = None,
+    reprocess: bool = False,
 ) -> GraphState:
     config = config or GraphConfig()
     router = router or ModelRouter(config.model_tiers)
     state = GraphState(content_id=content_id)
+    if graph_version is not None:
+        state.graph_version = graph_version
     state = load_content_node(state, provider=provider)
     state = clean_normalize_node(state)
-    state = cache_lookup_node(state, cache=cache)
+    if reprocess:
+        state.intermediate["content_hash"] = content_hash(state.text)
+        state = force_reprocess_node(state)
+    else:
+        state = cache_lookup_node(state, cache=cache)
     if state.status == "CACHE_HIT":
         state = persist_placeholder_node(state, config=config, repository=repository, outbox=outbox, cost_ledger=cost_ledger)
         return apply_content_status(state, status_machine=status_machine)
@@ -472,6 +485,8 @@ def run_enrichment(
     outbox: Outbox | None = None,
     cost_ledger: CostLedger | None = None,
     cache: EnrichmentCache | None = None,
+    graph_version: str | None = None,
+    reprocess: bool = False,
 ) -> BaseAnalysis:
     state = enrich(
         content_id,
@@ -484,6 +499,8 @@ def run_enrichment(
         outbox=outbox,
         cost_ledger=cost_ledger,
         cache=cache,
+        graph_version=graph_version,
+        reprocess=reprocess,
     )
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
