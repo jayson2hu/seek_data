@@ -22,6 +22,7 @@ class GraphState:
     traces: list[UsageTrace] = field(default_factory=list)
     analysis: BaseAnalysis | None = None
     status: str = "PENDING"
+    content_status: str = "WAIT_ANALYSIS"
     cancel_reason: str | None = None
     error: str | None = None
 
@@ -53,6 +54,7 @@ class GraphState:
             "traces": [trace.to_dict() for trace in self.traces],
             "analysis": self.analysis.to_dict() if self.analysis else None,
             "status": self.status,
+            "content_status": self.content_status,
             "cancel_reason": self.cancel_reason,
             "error": self.error,
         }

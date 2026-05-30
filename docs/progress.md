@@ -91,3 +91,9 @@
 - Status: done
 - Evidence: `ContentBaseAnalysisRecord`, `InMemoryContentBaseAnalysisRepository`, repository injection in `enrich`, and `tests/test_persistence.py`.
 - Acceptance: completed artifacts are persisted with graph version, model names, token/cost fields, and repeated processing upserts by `content_id` without duplicate rows.
+
+### F7.2 Content Status Transitions
+
+- Status: done
+- Evidence: `ContentStatusMachine`, status integration in `enrich`, and `tests/test_status_machine.py`.
+- Acceptance: success transitions `WAIT_ANALYSIS -> WAIT_SCORE`, filtered content transitions `WAIT_ANALYSIS -> CANCELLED`, and illegal transitions from terminal states are rejected.

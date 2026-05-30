@@ -10,6 +10,7 @@ from l1_data_processing.llm.router import ModelRouter
 from l1_data_processing.persistence import ContentBaseAnalysisRecord, ContentBaseAnalysisRepository
 from l1_data_processing.schema import SchemaValidationError, build_base_analysis, validate_base_analysis_payload
 from l1_data_processing.state import GraphState
+from l1_data_processing.status import CANCELLED, FAILED, WAIT_ANALYSIS, WAIT_SCORE, ContentStatusMachine
 from l1_data_processing.tagging import detect_language, infer_general_tags
 from l1_data_processing.text import clean_normalize_text
 
@@ -18,6 +19,7 @@ def load_content_node(state: GraphState, *, provider: ContentProvider) -> GraphS
     content = provider.get(state.content_id)
     state.content = content
     state.text = content.normalized_text()
+    state.content_status = WAIT_ANALYSIS
     state.status = "CONTENT_LOADED"
     return state
 
@@ -60,6 +62,7 @@ def filter_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> Gr
 
     if bool(result.get("ignore")):
         state.status = "CANCELLED"
+        state.content_status = CANCELLED
         state.cancel_reason = str(result.get("reason", "filtered"))
     else:
         state.status = "FILTER_PASSED"
@@ -138,6 +141,7 @@ def request_valid_structured(
             errors.append(str(exc))
 
     state.status = "FAILED"
+    state.content_status = FAILED
     state.error = f"{schema_name} validation failed after {max_attempts} attempts: {errors[-1]}"
     state.intermediate.setdefault("schema_errors", []).extend(errors)
     return None
@@ -327,6 +331,16 @@ def persist_placeholder_node(state: GraphState, *, repository: ContentBaseAnalys
         )
         state.intermediate["content_base_analysis_record"] = repository.upsert(record).to_dict()
     state.status = "COMPLETED"
+    state.content_status = WAIT_SCORE
+    return state
+
+
+def apply_content_status(state: GraphState, *, status_machine: ContentStatusMachine | None = None) -> GraphState:
+    if status_machine is None:
+        return state
+    status_machine.initialize(state.content_id, WAIT_ANALYSIS)
+    if state.content_status != WAIT_ANALYSIS:
+        status_machine.transition(state.content_id, state.content_status)
     return state
 
 
@@ -338,6 +352,7 @@ def enrich(
     router: ModelRouter | None = None,
     config: GraphConfig | None = None,
     repository: ContentBaseAnalysisRepository | None = None,
+    status_machine: ContentStatusMachine | None = None,
 ) -> GraphState:
     router = router or ModelRouter()
     config = config or GraphConfig()
@@ -346,20 +361,21 @@ def enrich(
     state = clean_normalize_node(state)
     state = filter_node(state, llm=llm, router=router)
     if state.status == "CANCELLED":
-        return state
+        return apply_content_status(state, status_machine=status_machine)
     state = branch_by_length_node(state, config=config)
     if state.route == "split":
         state = analyze_chunk_node(state, llm=llm, router=router, config=config)
         if state.status == "FAILED":
-            return state
+            return apply_content_status(state, status_machine=status_machine)
         state = aggregate_chunks_node(state)
     else:
         state = base_analysis_node(state, llm=llm, router=router, config=config)
         if state.status == "FAILED":
-            return state
+            return apply_content_status(state, status_machine=status_machine)
     state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
-    return persist_placeholder_node(state, repository=repository)
+    state = persist_placeholder_node(state, repository=repository)
+    return apply_content_status(state, status_machine=status_machine)
 
 
 def run_enrichment(
@@ -370,8 +386,17 @@ def run_enrichment(
     router: ModelRouter | None = None,
     config: GraphConfig | None = None,
     repository: ContentBaseAnalysisRepository | None = None,
+    status_machine: ContentStatusMachine | None = None,
 ) -> BaseAnalysis:
-    state = enrich(content_id, provider=provider, llm=llm, router=router, config=config, repository=repository)
+    state = enrich(
+        content_id,
+        provider=provider,
+        llm=llm,
+        router=router,
+        config=config,
+        repository=repository,
+        status_machine=status_machine,
+    )
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
     return state.analysis
