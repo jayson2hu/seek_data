@@ -103,3 +103,9 @@
 - Status: done
 - Evidence: `OutboxEvent`, `InMemoryOutbox`, `content_analyzed_event`, outbox injection in `enrich`, and `tests/test_outbox.py`.
 - Acceptance: completed content writes exactly one `content.analyzed` event by content_id, repeated processing is idempotent, relay marks events as sent, and cancelled content does not emit analyzed events.
+
+### F8.1 Model Routing by Tier
+
+- Status: done
+- Evidence: `GraphConfig.model_tiers`, `ModelRouter(config.model_tiers)` in `enrich`, and `tests/test_model_routing.py`.
+- Acceptance: filter, analysis, and embedding nodes use their configured model tiers; changing configuration switches models without graph code changes.

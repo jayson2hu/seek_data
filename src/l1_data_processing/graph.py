@@ -369,8 +369,8 @@ def enrich(
     status_machine: ContentStatusMachine | None = None,
     outbox: Outbox | None = None,
 ) -> GraphState:
-    router = router or ModelRouter()
     config = config or GraphConfig()
+    router = router or ModelRouter(config.model_tiers)
     state = GraphState(content_id=content_id)
     state = load_content_node(state, provider=provider)
     state = clean_normalize_node(state)
