@@ -2,6 +2,7 @@
 
 from l1_data_processing.contracts import BaseAnalysis, ContentInput
 from l1_data_processing.config import GraphConfig
+from l1_data_processing.cache import InMemoryEnrichmentCache
 from l1_data_processing.costing import InMemoryCostLedger
 from l1_data_processing.events import InMemoryOutbox
 from l1_data_processing.graph import enrich, run_enrichment
@@ -16,6 +17,7 @@ __all__ = [
     "InMemoryOutbox",
     "InMemoryContentBaseAnalysisRepository",
     "InMemoryCostLedger",
+    "InMemoryEnrichmentCache",
     "enrich",
     "run_enrichment",
 ]

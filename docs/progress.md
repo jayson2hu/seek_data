@@ -115,3 +115,9 @@
 - Status: done
 - Evidence: `CostRecord`, `InMemoryCostLedger`, `summarize_trace_cost`, cost ledger injection in `enrich`, and `tests/test_costing.py`.
 - Acceptance: each completed content records prompt/completion token cost, daily cost is aggregatable, and records exceeding `GraphConfig.cost_alert_threshold_units` produce alerts.
+
+### F9.1 enrichment_cache
+
+- Status: done
+- Evidence: `EnrichmentCacheEntry`, `InMemoryEnrichmentCache`, content hash cache lookup/store in `enrich`, and `tests/test_enrichment_cache.py`.
+- Acceptance: identical normalized content with the same graph version hits cache on the second run and performs zero LLM calls while still returning a completed analysis.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
+from l1_data_processing.cache import EnrichmentCache, EnrichmentCacheEntry, content_hash
 from l1_data_processing.config import GraphConfig
 from l1_data_processing.costing import CostLedger, summarize_trace_cost
 from l1_data_processing.contracts import BaseAnalysis, UsageTrace
@@ -34,6 +35,22 @@ def clean_normalize_node(state: GraphState) -> GraphState:
     state.text = cleaned
     state.intermediate["clean_stats"] = stats
     state.status = "CLEANED"
+    return state
+
+
+def cache_lookup_node(state: GraphState, *, cache: EnrichmentCache | None = None) -> GraphState:
+    state.intermediate["content_hash"] = content_hash(state.text)
+    if cache is None:
+        return state
+    entry = cache.get(state.intermediate["content_hash"], state.graph_version)
+    if entry is None:
+        state.intermediate["cache"] = {"hit": False}
+        return state
+    state.analysis = entry.analysis
+    state.lang = entry.analysis.lang
+    state.intermediate["cache"] = {"hit": True, "content_hash": entry.content_hash, "graph_version": entry.graph_version}
+    state.status = "CACHE_HIT"
+    state.content_status = WAIT_SCORE
     return state
 
 
@@ -310,19 +327,27 @@ def persist_placeholder_node(
     config = config or GraphConfig()
     if state.content is None:
         raise ValueError("content must be loaded before persistence")
-    data = state.intermediate.get("base_analysis")
-    embedding = state.intermediate.get("embedding")
-    if not isinstance(data, dict) or not isinstance(embedding, list):
-        raise ValueError("analysis data and embedding are required before persistence")
+    analysis = state.analysis
+    if analysis is None:
+        data = state.intermediate.get("base_analysis")
+        embedding = state.intermediate.get("embedding")
+        if not isinstance(data, dict) or not isinstance(embedding, list):
+            raise ValueError("analysis data and embedding are required before persistence")
 
-    analysis = build_base_analysis(
-        content_id=state.content.content_id,
-        payload=data,
-        embedding=embedding,
-        traces=list(state.traces),
-        lang=state.lang,
-    )
-    state.analysis = analysis
+        analysis = build_base_analysis(
+            content_id=state.content.content_id,
+            payload=data,
+            embedding=embedding,
+            traces=list(state.traces),
+            lang=state.lang,
+        )
+        state.analysis = analysis
+    content_hash_value = state.intermediate.get("content_hash")
+    if isinstance(content_hash_value, str):
+        state.intermediate["cache_entry"] = {
+            "content_hash": content_hash_value,
+            "graph_version": state.graph_version,
+        }
     if repository is not None:
         model_names = []
         seen: set[str] = set()
@@ -368,6 +393,22 @@ def persist_placeholder_node(
     return state
 
 
+def cache_store_node(state: GraphState, *, cache: EnrichmentCache | None = None) -> GraphState:
+    if cache is None or state.analysis is None:
+        return state
+    content_hash_value = state.intermediate.get("content_hash")
+    if not isinstance(content_hash_value, str):
+        return state
+    cache.set(
+        EnrichmentCacheEntry(
+            content_hash=content_hash_value,
+            graph_version=state.graph_version,
+            analysis=state.analysis,
+        )
+    )
+    return state
+
+
 def apply_content_status(state: GraphState, *, status_machine: ContentStatusMachine | None = None) -> GraphState:
     if status_machine is None:
         return state
@@ -388,12 +429,17 @@ def enrich(
     status_machine: ContentStatusMachine | None = None,
     outbox: Outbox | None = None,
     cost_ledger: CostLedger | None = None,
+    cache: EnrichmentCache | None = None,
 ) -> GraphState:
     config = config or GraphConfig()
     router = router or ModelRouter(config.model_tiers)
     state = GraphState(content_id=content_id)
     state = load_content_node(state, provider=provider)
     state = clean_normalize_node(state)
+    state = cache_lookup_node(state, cache=cache)
+    if state.status == "CACHE_HIT":
+        state = persist_placeholder_node(state, config=config, repository=repository, outbox=outbox, cost_ledger=cost_ledger)
+        return apply_content_status(state, status_machine=status_machine)
     state = filter_node(state, llm=llm, router=router)
     if state.status == "CANCELLED":
         return apply_content_status(state, status_machine=status_machine)
@@ -410,6 +456,7 @@ def enrich(
     state = language_and_tags_node(state)
     state = embedding_node(state, llm=llm, router=router, config=config)
     state = persist_placeholder_node(state, config=config, repository=repository, outbox=outbox, cost_ledger=cost_ledger)
+    state = cache_store_node(state, cache=cache)
     return apply_content_status(state, status_machine=status_machine)
 
 
@@ -424,6 +471,7 @@ def run_enrichment(
     status_machine: ContentStatusMachine | None = None,
     outbox: Outbox | None = None,
     cost_ledger: CostLedger | None = None,
+    cache: EnrichmentCache | None = None,
 ) -> BaseAnalysis:
     state = enrich(
         content_id,
@@ -435,6 +483,7 @@ def run_enrichment(
         status_machine=status_machine,
         outbox=outbox,
         cost_ledger=cost_ledger,
+        cache=cache,
     )
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
