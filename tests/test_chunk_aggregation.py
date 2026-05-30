@@ -47,7 +47,7 @@ def test_long_content_aggregates_each_chunk_marker_without_duplicates() -> None:
     assert chunks
     assert [trace.node for trace in state.traces] == [
         "filter",
-        *[f"analyze_chunk:{index}" for index in range(len(chunks))],
+        *[f"analyze_chunk:{index}:attempt:1" for index in range(len(chunks))],
         "embedding",
     ]
     assert llm.calls["structured:ChunkAnalysis"] == len(chunks)

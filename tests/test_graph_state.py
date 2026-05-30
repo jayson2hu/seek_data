@@ -1,4 +1,5 @@
 from l1_data_processing.graph import base_analysis_node, embedding_node, load_content_node
+from l1_data_processing.config import GraphConfig
 from l1_data_processing.input import StubContentProvider
 from l1_data_processing.llm import FakeLLM, ModelRouter
 from l1_data_processing.state import GRAPH_VERSION, GraphState
@@ -14,7 +15,7 @@ def test_graph_state_serializes_and_accumulates_across_nodes() -> None:
     assert state.status == "CONTENT_LOADED"
     assert state.text
 
-    state = base_analysis_node(state, llm=llm, router=router)
+    state = base_analysis_node(state, llm=llm, router=router, config=GraphConfig())
     state = embedding_node(state, llm=llm, router=router)
     serialized = state.to_dict()
 
@@ -22,7 +23,7 @@ def test_graph_state_serializes_and_accumulates_across_nodes() -> None:
     assert serialized["content"]["content_id"] == "demo-article"
     assert serialized["intermediate"]["base_analysis"]["one_liner"]
     assert len(serialized["intermediate"]["embedding"]) == 8
-    assert [trace["node"] for trace in serialized["traces"]] == ["base_analysis", "embedding"]
+    assert [trace["node"] for trace in serialized["traces"]] == ["base_analysis:attempt:1", "embedding"]
     assert serialized["cost"]["prompt_tokens"] > 0
 
 

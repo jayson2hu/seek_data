@@ -7,7 +7,7 @@ from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
-from l1_data_processing.schema import build_base_analysis
+from l1_data_processing.schema import SchemaValidationError, build_base_analysis, validate_base_analysis_payload
 from l1_data_processing.state import GraphState
 from l1_data_processing.text import clean_normalize_text
 
@@ -99,6 +99,48 @@ def split_text_into_chunks(text: str, *, chunk_size_chars: int, overlap_chars: i
     return chunks
 
 
+def _validate_structured_payload(schema_name: str, payload: dict[str, object]) -> dict[str, object]:
+    if schema_name in {"BaseAnalysis", "ChunkAnalysis"}:
+        return validate_base_analysis_payload(payload)
+    return payload
+
+
+def request_valid_structured(
+    *,
+    llm: LLMClient,
+    router: ModelRouter,
+    tier: str,
+    schema_name: str,
+    prompt: str,
+    node_name: str,
+    state: GraphState,
+    max_attempts: int,
+) -> dict[str, object] | None:
+    model = router.model_for(tier)
+    errors: list[str] = []
+    for attempt in range(1, max_attempts + 1):
+        started = perf_counter()
+        response = llm.structured(prompt, schema_name=schema_name, model=model)
+        state.add_trace(
+            UsageTrace(
+                node=f"{node_name}:attempt:{attempt}",
+                model=model,
+                prompt_tokens=response.prompt_tokens,
+                completion_tokens=response.completion_tokens,
+                elapsed_ms=int((perf_counter() - started) * 1000),
+            )
+        )
+        try:
+            return _validate_structured_payload(schema_name, response.data)
+        except SchemaValidationError as exc:
+            errors.append(str(exc))
+
+    state.status = "FAILED"
+    state.error = f"{schema_name} validation failed after {max_attempts} attempts: {errors[-1]}"
+    state.intermediate.setdefault("schema_errors", []).extend(errors)
+    return None
+
+
 def analyze_chunk_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, config: GraphConfig) -> GraphState:
     if state.route != "split":
         return state
@@ -111,24 +153,20 @@ def analyze_chunk_node(state: GraphState, *, llm: LLMClient, router: ModelRouter
         overlap_chars=config.chunk_overlap_chars,
     )
     chunk_results: list[dict[str, object]] = []
-    analysis_model = router.model_for("standard")
     for index, chunk in enumerate(chunks):
-        started = perf_counter()
-        response = llm.structured(
-            f"Analyze chunk {index + 1}/{len(chunks)} for content_id={state.content_id}.\n\n{chunk}",
+        result = request_valid_structured(
+            llm=llm,
+            router=router,
+            tier="standard",
             schema_name="ChunkAnalysis",
-            model=analysis_model,
+            prompt=f"Analyze chunk {index + 1}/{len(chunks)} for content_id={state.content_id}.\n\n{chunk}",
+            node_name=f"analyze_chunk:{index}",
+            state=state,
+            max_attempts=config.structured_max_attempts,
         )
-        chunk_results.append(response.data)
-        state.add_trace(
-            UsageTrace(
-                node=f"analyze_chunk:{index}",
-                model=analysis_model,
-                prompt_tokens=response.prompt_tokens,
-                completion_tokens=response.completion_tokens,
-                elapsed_ms=int((perf_counter() - started) * 1000),
-            )
-        )
+        if result is None:
+            return state
+        chunk_results.append(result)
 
     state.intermediate["chunks"] = chunks
     state.intermediate["chunk_analyses"] = chunk_results
@@ -181,27 +219,23 @@ def aggregate_chunks_node(state: GraphState) -> GraphState:
     return state
 
 
-def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> GraphState:
+def base_analysis_node(state: GraphState, *, llm: LLMClient, router: ModelRouter, config: GraphConfig) -> GraphState:
     if state.content is None or not state.text:
         raise ValueError("content must be loaded before base analysis")
 
-    started = perf_counter()
-    analysis_model = router.model_for("standard")
-    response = llm.structured(
-        f"Create BaseAnalysis for content_id={state.content.content_id}\n\n{state.text}",
+    result = request_valid_structured(
+        llm=llm,
+        router=router,
+        tier="standard",
         schema_name="BaseAnalysis",
-        model=analysis_model,
+        prompt=f"Create BaseAnalysis for content_id={state.content.content_id}\n\n{state.text}",
+        node_name="base_analysis",
+        state=state,
+        max_attempts=config.structured_max_attempts,
     )
-    state.intermediate["base_analysis"] = response.data
-    state.add_trace(
-        UsageTrace(
-            node="base_analysis",
-            model=analysis_model,
-            prompt_tokens=response.prompt_tokens,
-            completion_tokens=response.completion_tokens,
-            elapsed_ms=int((perf_counter() - started) * 1000),
-        )
-    )
+    if result is None:
+        return state
+    state.intermediate["base_analysis"] = result
     state.status = "ANALYZED"
     return state
 
@@ -265,9 +299,13 @@ def enrich(
     state = branch_by_length_node(state, config=config)
     if state.route == "split":
         state = analyze_chunk_node(state, llm=llm, router=router, config=config)
+        if state.status == "FAILED":
+            return state
         state = aggregate_chunks_node(state)
     else:
-        state = base_analysis_node(state, llm=llm, router=router)
+        state = base_analysis_node(state, llm=llm, router=router, config=config)
+        if state.status == "FAILED":
+            return state
     state = embedding_node(state, llm=llm, router=router)
     return persist_placeholder_node(state)
 

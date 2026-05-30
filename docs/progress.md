@@ -67,3 +67,9 @@
 - Status: done
 - Evidence: `l1_data_processing.schema`, `build_base_analysis`, and `tests/test_base_analysis_schema.py`.
 - Acceptance: `BaseAnalysis` payloads must satisfy required non-empty fields, typed string lists, optional empty quotes, numeric embeddings, and schema-normalized output.
+
+### F5.2 Validation Retry and Fallback
+
+- Status: done
+- Evidence: `request_valid_structured`, `GraphConfig.structured_max_attempts`, and `tests/test_structured_retry.py`.
+- Acceptance: invalid structured payloads trigger retry; repeated failures mark state `FAILED`, record schema errors, skip embedding/persistence, and do not create a polluted `BaseAnalysis`.

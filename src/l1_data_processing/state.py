@@ -23,6 +23,7 @@ class GraphState:
     analysis: BaseAnalysis | None = None
     status: str = "PENDING"
     cancel_reason: str | None = None
+    error: str | None = None
 
     def add_trace(self, trace: UsageTrace) -> None:
         self.traces.append(trace)
@@ -53,4 +54,5 @@ class GraphState:
             "analysis": self.analysis.to_dict() if self.analysis else None,
             "status": self.status,
             "cancel_reason": self.cancel_reason,
+            "error": self.error,
         }
