@@ -37,3 +37,9 @@
 - Status: done
 - Evidence: `l1_data_processing.graph.enrich` plus explicit load, analysis, embedding, and placeholder persistence nodes.
 - Acceptance: `enrich(content_id)` runs the standalone path end to end and returns a completed `GraphState` with a valid analysis artifact.
+
+### F3.1 clean_normalize Node
+
+- Status: done
+- Evidence: `l1_data_processing.text.clean_normalize_text`, `clean_normalize_node`, and `tests/test_clean_normalize.py`.
+- Acceptance: HTML tags/entities and extra whitespace are normalized; graph state records character, word, and paragraph counts.

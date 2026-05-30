@@ -7,6 +7,7 @@ from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
 from l1_data_processing.state import GraphState
+from l1_data_processing.text import clean_normalize_text
 
 
 def load_content_node(state: GraphState, *, provider: ContentProvider) -> GraphState:
@@ -14,6 +15,17 @@ def load_content_node(state: GraphState, *, provider: ContentProvider) -> GraphS
     state.content = content
     state.text = content.normalized_text()
     state.status = "CONTENT_LOADED"
+    return state
+
+
+def clean_normalize_node(state: GraphState) -> GraphState:
+    if not state.text:
+        raise ValueError("text must be present before clean normalize")
+
+    cleaned, stats = clean_normalize_text(state.text)
+    state.text = cleaned
+    state.intermediate["clean_stats"] = stats
+    state.status = "CLEANED"
     return state
 
 
@@ -92,6 +104,7 @@ def enrich(content_id: str, *, provider: ContentProvider, llm: LLMClient, router
     router = router or ModelRouter()
     state = GraphState(content_id=content_id)
     state = load_content_node(state, provider=provider)
+    state = clean_normalize_node(state)
     state = base_analysis_node(state, llm=llm, router=router)
     state = embedding_node(state, llm=llm, router=router)
     return persist_placeholder_node(state)
