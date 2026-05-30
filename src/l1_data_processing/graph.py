@@ -7,6 +7,7 @@ from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
 from l1_data_processing.llm.router import ModelRouter
+from l1_data_processing.schema import build_base_analysis
 from l1_data_processing.state import GraphState
 from l1_data_processing.text import clean_normalize_text
 
@@ -234,18 +235,12 @@ def persist_placeholder_node(state: GraphState) -> GraphState:
     if not isinstance(data, dict) or not isinstance(embedding, list):
         raise ValueError("analysis data and embedding are required before persistence")
 
-    analysis = BaseAnalysis(
+    analysis = build_base_analysis(
         content_id=state.content.content_id,
-        one_liner=str(data["one_liner"]),
-        summary=str(data["summary"]),
-        key_points=list(data["key_points"]),
-        quotes=list(data.get("quotes", [])),
-        entities=list(data.get("entities", [])),
-        base_tags=list(data["base_tags"]),
+        payload=data,
         embedding=embedding,
         traces=list(state.traces),
     )
-    analysis.validate()
     state.analysis = analysis
     state.status = "COMPLETED"
     return state

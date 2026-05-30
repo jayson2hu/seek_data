@@ -61,3 +61,9 @@
 - Status: done
 - Evidence: `split_text_into_chunks`, `analyze_chunk_node`, `aggregate_chunks_node`, FakeLLM sequenced responses, and `tests/test_chunk_aggregation.py`.
 - Acceptance: long content is split into chunks, each chunk is analyzed deterministically, and aggregation preserves each chunk's marker key point without duplicates.
+
+### F5.1 Structured Extraction Schema
+
+- Status: done
+- Evidence: `l1_data_processing.schema`, `build_base_analysis`, and `tests/test_base_analysis_schema.py`.
+- Acceptance: `BaseAnalysis` payloads must satisfy required non-empty fields, typed string lists, optional empty quotes, numeric embeddings, and schema-normalized output.
