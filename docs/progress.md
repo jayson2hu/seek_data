@@ -127,3 +127,9 @@
 - Status: done
 - Evidence: `graph_version` and `reprocess` inputs on `enrich`, reprocess cache bypass, versioned cache keys, and `tests/test_enrichment_cache.py`.
 - Acceptance: upgrading graph version creates a new cache key and reruns processing; explicit reprocess bypasses same-version cache and reruns LLM work.
+
+### E10 DoD Smoke
+
+- Status: done
+- Evidence: `l1_data_processing.dod`, upgraded `l1_data_processing.smoke`, `make l1-dod`, and `tests/test_dod.py`.
+- Acceptance: one command verifies standalone execution, cache hit, reprocess, filter cancellation, long-content split, persistence/outbox/status/cost side effects, and prints `L1 DOD: PASS`.
