@@ -16,6 +16,7 @@ class GraphState:
     content: ContentInput | None = None
     text: str = ""
     lang: str | None = None
+    route: str | None = None
     intermediate: dict[str, Any] = field(default_factory=dict)
     cost: dict[str, int] = field(default_factory=lambda: {"prompt_tokens": 0, "completion_tokens": 0})
     traces: list[UsageTrace] = field(default_factory=list)
@@ -45,6 +46,7 @@ class GraphState:
             },
             "text": self.text,
             "lang": self.lang,
+            "route": self.route,
             "intermediate": self.intermediate,
             "cost": self.cost,
             "traces": [trace.to_dict() for trace in self.traces],

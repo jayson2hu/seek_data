@@ -49,3 +49,9 @@
 - Status: done
 - Evidence: `filter_node`, `ContentFilter` FakeLLM preset support, and `tests/test_filter_node.py`.
 - Acceptance: obvious low-quality/marketing content can be marked `CANCELLED`; cancelled state short-circuits expensive base analysis and embedding nodes.
+
+### F4.1 Length Branch
+
+- Status: done
+- Evidence: `GraphConfig`, `branch_by_length_node`, and `tests/test_length_branch.py`.
+- Acceptance: short content routes to `full`, long content routes to `split`, and the threshold is configurable.

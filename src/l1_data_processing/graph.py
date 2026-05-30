@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
+from l1_data_processing.config import GraphConfig
 from l1_data_processing.contracts import BaseAnalysis, UsageTrace
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient
@@ -59,6 +60,22 @@ def filter_node(state: GraphState, *, llm: LLMClient, router: ModelRouter) -> Gr
         state.cancel_reason = str(result.get("reason", "filtered"))
     else:
         state.status = "FILTER_PASSED"
+    return state
+
+
+def branch_by_length_node(state: GraphState, *, config: GraphConfig) -> GraphState:
+    if not state.text:
+        raise ValueError("text must be present before length branch")
+
+    char_count = len(state.text)
+    route = "split" if char_count > config.split_threshold_chars else "full"
+    state.route = route
+    state.intermediate["length_branch"] = {
+        "route": route,
+        "char_count": char_count,
+        "threshold": config.split_threshold_chars,
+    }
+    state.status = "BRANCHED"
     return state
 
 
@@ -133,21 +150,37 @@ def persist_placeholder_node(state: GraphState) -> GraphState:
     return state
 
 
-def enrich(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> GraphState:
+def enrich(
+    content_id: str,
+    *,
+    provider: ContentProvider,
+    llm: LLMClient,
+    router: ModelRouter | None = None,
+    config: GraphConfig | None = None,
+) -> GraphState:
     router = router or ModelRouter()
+    config = config or GraphConfig()
     state = GraphState(content_id=content_id)
     state = load_content_node(state, provider=provider)
     state = clean_normalize_node(state)
     state = filter_node(state, llm=llm, router=router)
     if state.status == "CANCELLED":
         return state
+    state = branch_by_length_node(state, config=config)
     state = base_analysis_node(state, llm=llm, router=router)
     state = embedding_node(state, llm=llm, router=router)
     return persist_placeholder_node(state)
 
 
-def run_enrichment(content_id: str, *, provider: ContentProvider, llm: LLMClient, router: ModelRouter | None = None) -> BaseAnalysis:
-    state = enrich(content_id, provider=provider, llm=llm, router=router)
+def run_enrichment(
+    content_id: str,
+    *,
+    provider: ContentProvider,
+    llm: LLMClient,
+    router: ModelRouter | None = None,
+    config: GraphConfig | None = None,
+) -> BaseAnalysis:
+    state = enrich(content_id, provider=provider, llm=llm, router=router, config=config)
     if state.analysis is None:
         raise ValueError(f"enrichment finished without analysis: status={state.status}")
     return state.analysis
