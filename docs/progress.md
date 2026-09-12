@@ -20,6 +20,12 @@
 - Evidence: `l1_data_processing.input` module, fixture content, and `tests/test_content_provider.py`.
 - Acceptance: graph code depends on the `ContentProvider` protocol; `StubContentProvider` reads fixtures.
 
+### F1.3 content.ingested Consumer
+
+- Status: done
+- Evidence: `l1_data_processing.consumer.consume_content_ingested`, `CONTENT_INGESTED`, and `tests/test_consumer.py`.
+- Acceptance: `content.ingested` events validate topic and payload, trigger `enrich(content_id)`, pass through graph version/reprocess controls, and remain idempotent with cache and outbox injection.
+
 ### Minimal Graph Smoke
 
 - Status: done

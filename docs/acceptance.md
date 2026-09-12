@@ -1,6 +1,6 @@
 # L1 Acceptance Report
 
-Date: 2026-05-31
+Date: 2026-06-01
 
 ## Scope
 
@@ -16,13 +16,14 @@ $env:PYTHONPATH='D:\vscodefile\seek_data\src'; python -m l1_data_processing.dod
 
 Latest results:
 
-- `51 passed`
+- `55 passed`
 - `L1 PIPELINE: PASS checks=standalone pipeline,cache hit,reprocess,filter cancel,long content`
 - `L1 DOD: PASS checks=standalone pipeline,cache hit,reprocess,filter cancel,long content`
 
 ## DoD Evidence
 
 - Independent run: `run_dod_checks` uses fixtures, `StubContentProvider`, and `FakeLLM`.
+- Event intake: `tests/test_consumer.py` covers `content.ingested` contract validation, enrichment dispatch, and duplicate handling through cache/outbox idempotency.
 - Initial filter: low-quality content returns `CANCELLED` and no analysis artifact.
 - Schema extraction: `tests/test_base_analysis_schema.py` and structured retry tests validate required fields and bad-output handling.
 - Long content: split route and chunk aggregation are covered by `tests/test_chunk_aggregation.py`.

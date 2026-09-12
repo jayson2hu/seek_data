@@ -1,5 +1,7 @@
 # L1 Data Processing
 
+[异地开发指南](DEVELOPMENT.md) · [平台总文档与关联仓库](https://github.com/jayson2hu/codepick-docs)
+
 L1 data processing service scaffold built from the delivery documents in `L1数据加工/`.
 
 The current implementation is intentionally standalone:
