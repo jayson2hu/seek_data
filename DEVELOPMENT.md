@@ -4,7 +4,7 @@
 
 ## 克隆与环境
 
-需要 Git 和 Python 3.11 或更新版本。以下命令都从本仓库根目录执行。
+需要 Git 和 Python 3.12。以下命令都从本仓库根目录执行。
 
 ```sh
 git clone https://github.com/jayson2hu/seek_data.git
@@ -23,7 +23,18 @@ python -m l1_data_processing.dod
 
 ## 当前运行模式
 
-当前默认使用 StubContentProvider、FakeLLM 和内存存储。2026-09-12 已新增 L0ContentProvider 与实际 L0 本地契约检查：在本环境安装相邻 L0 包 `python -m pip install -e ../deepdata`，再运行 `python -m l1_data_processing.l0_smoke`。跨层路径需要 Python 3.12+。真实模型及持续事件消费仍待接入；M1 已新增 SQL 持久化入口并完成实际 L2 本地读取，仍不代表全平台真实服务联调完成。详见 [本轮开发记录](docs/2026-09-12-continuation.md)。
+当前默认使用 StubContentProvider、FakeLLM 和内存存储。2026-09-12 已新增 L0ContentProvider 与实际 L0 本地契约检查：在本环境安装相邻 L0 包 `python -m pip install -e ../deepdata`，再运行 `python -m l1_data_processing.l0_smoke`。
+
+版本闭环模式使用持久 SQL 和 Redis：
+
+```sh
+python -m l1_data_processing.worker
+python -m l1_data_processing.relay
+```
+
+worker 需要 `L0_DATABASE_URL`、`L0_OBJECT_STORE_PATH`、
+`L1_DATABASE_URL` 和 `L1_REDIS_URL`；relay 需要后两项。两个入口均支持
+`--once`。当前 worker 明确使用 FakeLLM，不会调用付费模型。
 
 ## 交接范围
 

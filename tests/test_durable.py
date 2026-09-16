@@ -10,7 +10,8 @@ from threading import Barrier
 import pytest
 from sqlalchemy import create_engine, event, func, select
 
-from l1_data_processing.durable import process_content
+from l1_data_processing.durable import process_content, process_content_ingested
+from l1_data_processing.events import OutboxEvent
 from l1_data_processing.input import StubContentProvider
 from l1_data_processing.llm import FakeLLM
 from l1_data_processing.sql_schema import (
@@ -72,6 +73,7 @@ def test_success_commits_snapshot_analysis_cost_cache_and_versioned_outbox(store
     assert events[0].event_id == f"content.analyzed:{result.run_id}"
     assert events[0].payload["analysis"] == row["analysis"]
     assert events[0].payload["run_id"] == row["run_id"] == run["run_id"]
+    assert events[0].payload["revision"] == 1
 
 
 def test_success_replays_across_store_instances_without_new_call_or_cost(store):
@@ -374,3 +376,51 @@ def test_old_successful_attempt_does_not_swallow_a_new_activation_conflict(store
         process(store)
     assert store.get("42")["run_id"] == winning[0].run_id
     assert len(store.runs()) == len(store.pending_events()) == 3
+
+
+def test_versioned_l0_event_produces_revisioned_l1_event(store):
+    provider = FixedProvider(metadata={
+        "content_version": 2,
+        "l0_content_hash": "l0-v2",
+        "lang": "en",
+    })
+    event = OutboxEvent(
+        "content.ingested:42:v2",
+        "content.ingested",
+        "42",
+        {
+            "content_id": 42,
+            "content_version": 2,
+            "content_hash": "l0-v2",
+        },
+    )
+
+    result = process_content_ingested(event, store=store, provider=provider, llm=FakeLLM())
+
+    assert result is not None and result.status == "WAIT_SCORE"
+    emitted = store.pending_events()[0]
+    assert emitted.payload["run_id"] == result.run_id
+    assert emitted.payload["revision"] == 1
+    assert emitted.payload["content_version"] == 2
+
+
+def test_stale_l0_event_is_acknowledged_without_obsolete_analysis(store):
+    provider = FixedProvider(metadata={
+        "content_version": 3,
+        "l0_content_hash": "l0-v3",
+    })
+    stale = OutboxEvent(
+        "content.ingested:42:v2",
+        "content.ingested",
+        "42",
+        {
+            "content_id": 42,
+            "content_version": 2,
+            "content_hash": "l0-v2",
+        },
+    )
+
+    assert process_content_ingested(
+        stale, store=store, provider=provider, llm=FakeLLM(),
+    ) is None
+    assert counts(store) == [0, 0, 0, 0]

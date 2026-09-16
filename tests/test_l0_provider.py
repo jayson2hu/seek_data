@@ -10,7 +10,8 @@ def l0_content(**overrides):
     values = dict(
         id=42, title="Real stored article", clean_text="Text from the L0 object store.",
         canonical_url="https://example.test/article", published_at=datetime(2026, 9, 12, tzinfo=UTC),
-        lang="en", status="WAIT_FILTER", source=SimpleNamespace(id=7, name="Example feed"),
+        lang="en", status="WAIT_FILTER", current_version=3, content_hash="l0-hash",
+        source=SimpleNamespace(id=7, name="Example feed"),
     )
     values.update(overrides)
     return SimpleNamespace(**values)
@@ -32,7 +33,13 @@ def test_maps_frozen_l0_query_contract_without_mutation():
     assert result.body == original.clean_text
     assert result.source_url == original.canonical_url
     assert result.published_at == original.published_at
-    assert result.metadata == {"lang": "en", "status": "WAIT_FILTER", "source": {"id": 7, "name": "Example feed"}}
+    assert result.metadata == {
+        "lang": "en",
+        "status": "WAIT_FILTER",
+        "content_version": 3,
+        "l0_content_hash": "l0-hash",
+        "source": {"id": 7, "name": "Example feed"},
+    }
     assert original.status == "WAIT_FILTER"
 
 

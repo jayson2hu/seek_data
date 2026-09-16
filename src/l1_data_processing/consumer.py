@@ -21,6 +21,8 @@ CONTENT_INGESTED = "content.ingested"
 @dataclass(frozen=True)
 class ContentIngestedMessage:
     content_id: str
+    content_version: int | None = None
+    content_hash: str | None = None
     graph_version: str | None = None
     reprocess: bool = False
 
@@ -45,8 +47,24 @@ def parse_content_ingested(event: OutboxEvent) -> ContentIngestedMessage:
     if not isinstance(reprocess, bool):
         raise ValueError("content.ingested payload reprocess must be a boolean")
 
+    content_version = event.payload.get("content_version")
+    if content_version is not None and (
+        isinstance(content_version, bool)
+        or not isinstance(content_version, int)
+        or content_version < 1
+    ):
+        raise ValueError("content.ingested payload content_version must be a positive integer")
+
+    content_hash = event.payload.get("content_hash")
+    if content_hash is not None and (
+        not isinstance(content_hash, str) or not content_hash.strip()
+    ):
+        raise ValueError("content.ingested payload content_hash must be a non-empty string")
+
     return ContentIngestedMessage(
         content_id=content_id.strip(),
+        content_version=content_version,
+        content_hash=content_hash.strip() if content_hash is not None else None,
         graph_version=graph_version,
         reprocess=reprocess,
     )

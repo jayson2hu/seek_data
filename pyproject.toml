@@ -3,7 +3,7 @@ name = "l1-data-processing"
 version = "0.1.0"
 description = "Standalone L1 data processing service scaffold with stub content and fake LLM."
 requires-python = ">=3.11"
-dependencies = ["sqlalchemy>=2.0"]
+dependencies = ["sqlalchemy>=2.0", "redis>=5.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

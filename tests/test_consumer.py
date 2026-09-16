@@ -13,12 +13,20 @@ def test_parse_content_ingested_validates_contract() -> None:
         event_id="content.ingested:demo-article",
         topic=CONTENT_INGESTED,
         aggregate_id="demo-article",
-        payload={"content_id": " demo-article ", "graph_version": "v2", "reprocess": True},
+        payload={
+            "content_id": " demo-article ",
+            "content_version": 2,
+            "content_hash": "body-v2",
+            "graph_version": "v2",
+            "reprocess": True,
+        },
     )
 
     message = parse_content_ingested(event)
 
     assert message.content_id == "demo-article"
+    assert message.content_version == 2
+    assert message.content_hash == "body-v2"
     assert message.graph_version == "v2"
     assert message.reprocess is True
 
@@ -103,6 +111,18 @@ def test_parse_content_ingested_accepts_l0_integer_ids(content_id, expected):
 def test_parse_content_ingested_rejects_invalid_ids(content_id):
     event = OutboxEvent("event", CONTENT_INGESTED, "invalid", {"content_id": content_id})
     with pytest.raises(ValueError, match="content_id"):
+        parse_content_ingested(event)
+
+
+@pytest.mark.parametrize("content_version", [True, False, 0, -1, 1.5, "2", [], {}])
+def test_parse_content_ingested_rejects_invalid_versions(content_version):
+    event = OutboxEvent(
+        "event",
+        CONTENT_INGESTED,
+        "42",
+        {"content_id": 42, "content_version": content_version},
+    )
+    with pytest.raises(ValueError, match="content_version"):
         parse_content_ingested(event)
 
 

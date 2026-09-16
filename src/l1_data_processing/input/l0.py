@@ -19,6 +19,8 @@ class L0Source(Protocol):
 
 class L0Content(Protocol):
     id: int
+    current_version: int
+    content_hash: str | None
     title: str | None
     clean_text: str
     canonical_url: str
@@ -71,6 +73,8 @@ class L0ContentProvider:
             metadata={
                 "lang": content.lang,
                 "status": content.status,
+                "content_version": content.current_version,
+                "l0_content_hash": content.content_hash,
                 "source": {"id": content.source.id, "name": content.source.name},
             },
         )

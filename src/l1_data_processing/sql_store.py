@@ -141,6 +141,12 @@ class SqlAlchemyEnrichmentStore:
                 connection.execute(insert(processing_runs).values(**run))
                 if run["status"] == "WAIT_SCORE" and run["analysis"] is not None:
                     self._save_cache(connection, run)
+                    metadata = run["input_snapshot"].get("metadata", {})
+                    content_version = (
+                        metadata.get("content_version")
+                        if isinstance(metadata, dict)
+                        else None
+                    )
                     connection.execute(insert(outbox_events).values(
                         event_id=f"content.analyzed:{run['run_id']}",
                         run_id=run["run_id"], topic="content.analyzed",
@@ -149,6 +155,8 @@ class SqlAlchemyEnrichmentStore:
                             "schema_version": 1, "content_id": run["content_id"],
                             "run_id": run["run_id"], "graph_version": run["graph_version"],
                             "content_hash": run["content_hash"], "status": "WAIT_SCORE",
+                            "revision": values["revision"],
+                            "content_version": content_version,
                             "analysis": run["analysis"],
                         },
                         created_at=run["finished_at"], sent_at=None,

@@ -11,7 +11,9 @@ from typing import Any
 
 from l1_data_processing.cache import EnrichmentCacheEntry, InMemoryEnrichmentCache, content_hash
 from l1_data_processing.config import GraphConfig
+from l1_data_processing.consumer import parse_content_ingested
 from l1_data_processing.contracts import BaseAnalysis, ContentInput, UsageTrace
+from l1_data_processing.events import OutboxEvent
 from l1_data_processing.graph import enrich
 from l1_data_processing.input.provider import ContentProvider
 from l1_data_processing.llm.client import LLMClient, LLMResponse
@@ -68,6 +70,51 @@ class _SnapshotProvider:
         if content_id != self.content.content_id:
             raise ValueError("input snapshot content identity changed")
         return deepcopy(self.content)
+
+
+def process_content_ingested(
+    event: OutboxEvent,
+    *,
+    store: SqlAlchemyEnrichmentStore,
+    provider: ContentProvider,
+    llm: LLMClient,
+    config: GraphConfig | None = None,
+    router: ModelRouter | None = None,
+) -> ProcessingResult | None:
+    """Process a versioned L0 event or acknowledge it as superseded.
+
+    L0 guarantees a distinct outbox event for every content version. If an old
+    delivery arrives after the provider already exposes a newer head, the old
+    event is safely acknowledged without generating an obsolete L1 snapshot.
+    """
+    message = parse_content_ingested(event)
+    content = deepcopy(provider.get(message.content_id))
+    metadata = content.metadata
+    current_version = metadata.get("content_version")
+    current_hash = metadata.get("l0_content_hash")
+    if message.content_version is not None:
+        if (
+            isinstance(current_version, bool)
+            or not isinstance(current_version, int)
+            or current_version < 1
+        ):
+            raise ValueError("L0 provider did not expose a valid content_version")
+        if current_version > message.content_version:
+            return None
+        if current_version < message.content_version:
+            raise RuntimeError("L0 provider snapshot is older than the delivered event")
+    if message.content_hash is not None and current_hash != message.content_hash:
+        raise RuntimeError("L0 provider content_hash does not match the delivered event")
+    return process_content(
+        message.content_id,
+        store=store,
+        provider=_SnapshotProvider(content),
+        llm=llm,
+        graph_version=message.graph_version or GRAPH_VERSION,
+        reprocess_key=event.event_id if message.reprocess else None,
+        config=config,
+        router=router,
+    )
 
 
 class _TrackedLLM:
