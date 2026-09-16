@@ -37,3 +37,8 @@ Latest results:
 - Replace `StubContentProvider` with an L0-backed provider at integration time.
 - Replace in-memory repository, outbox, cache, and cost ledger with platform storage implementations.
 - Keep the frozen contracts: `BaseAnalysis`, `content.analyzed`, and L1-owned `content_base_analysis` / `enrichment_cache`.
+
+
+## 2026-09-12 continuation
+
+本轮已完成真实 L0 provider、整数事件契约、缓存身份与重复投递修复；安装相邻 L0 后 84 项测试和三项 smoke/DoD 通过。完整新证据与未完成范围见 [本轮开发记录](2026-09-12-continuation.md)。上文的旧机器路径与 55 项结果保留为历史记录。

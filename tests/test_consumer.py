@@ -91,3 +91,34 @@ def test_consume_content_ingested_is_idempotent_with_cache_and_outbox() -> None:
     assert second.intermediate["cache"]["hit"] is True
     assert dict(second_llm.calls) == {}
     assert outbox.count() == 1
+
+
+@pytest.mark.parametrize("content_id, expected", [(1, "1"), (42, "42"), ("demo-article", "demo-article")])
+def test_parse_content_ingested_accepts_l0_integer_ids(content_id, expected):
+    event = OutboxEvent("event", CONTENT_INGESTED, str(content_id), {"content_id": content_id})
+    assert parse_content_ingested(event).content_id == expected
+
+
+@pytest.mark.parametrize("content_id", [None, True, False, 0, -1, 1.5, [], {}, "", " "])
+def test_parse_content_ingested_rejects_invalid_ids(content_id):
+    event = OutboxEvent("event", CONTENT_INGESTED, "invalid", {"content_id": content_id})
+    with pytest.raises(ValueError, match="content_id"):
+        parse_content_ingested(event)
+
+
+def test_duplicate_delivery_with_shared_status_machine_is_idempotent():
+    from l1_data_processing.status import WAIT_SCORE, ContentStatusMachine
+
+    machine = ContentStatusMachine()
+    cache = InMemoryEnrichmentCache()
+    repository = InMemoryContentBaseAnalysisRepository()
+    outbox = InMemoryOutbox()
+    event = OutboxEvent("event", CONTENT_INGESTED, "demo-article", {"content_id": "demo-article"})
+    for _ in range(2):
+        result = consume_content_ingested(
+            event, provider=StubContentProvider(), llm=FakeLLM(), status_machine=machine,
+            cache=cache, repository=repository, outbox=outbox,
+        )
+        assert result.status == "COMPLETED"
+    assert machine.get("demo-article") == WAIT_SCORE
+    assert repository.count() == outbox.count() == 1
