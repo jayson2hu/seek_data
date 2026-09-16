@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import replace
 from time import perf_counter
 
 from l1_data_processing.cache import EnrichmentCache, EnrichmentCacheEntry, content_hash
@@ -46,8 +48,10 @@ def cache_lookup_node(state: GraphState, *, cache: EnrichmentCache | None = None
     if entry is None:
         state.intermediate["cache"] = {"hit": False}
         return state
-    state.analysis = entry.analysis
-    state.lang = entry.analysis.lang
+    # The cache is keyed by text, so a different content ID can reuse it.
+    # Keep its outputs attached to the current item and isolate mutable lists.
+    state.analysis = replace(deepcopy(entry.analysis), content_id=state.content_id)
+    state.lang = state.analysis.lang
     state.intermediate["cache"] = {"hit": True, "content_hash": entry.content_hash, "graph_version": entry.graph_version}
     state.status = "CACHE_HIT"
     state.content_status = WAIT_SCORE
@@ -418,7 +422,7 @@ def apply_content_status(state: GraphState, *, status_machine: ContentStatusMach
     if status_machine is None:
         return state
     status_machine.initialize(state.content_id, WAIT_ANALYSIS)
-    if state.content_status != WAIT_ANALYSIS:
+    if state.content_status != status_machine.get(state.content_id):
         status_machine.transition(state.content_id, state.content_status)
     return state
 

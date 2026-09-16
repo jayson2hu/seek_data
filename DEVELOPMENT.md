@@ -23,10 +23,15 @@ python -m l1_data_processing.dod
 
 ## 当前运行模式
 
-当前默认使用 StubContentProvider、FakeLLM 和内存存储。接入真实 L0、模型、数据库及事件总线仍属于后续集成工作；交接不代表全平台已完成真实联调。
+当前默认使用 StubContentProvider、FakeLLM 和内存存储。2026-09-12 已新增 L0ContentProvider 与实际 L0 本地契约检查：在本环境安装相邻 L0 包 `python -m pip install -e ../deepdata`，再运行 `python -m l1_data_processing.l0_smoke`。跨层路径需要 Python 3.12+。真实模型及持续事件消费仍待接入；M1 已新增 SQL 持久化入口并完成实际 L2 本地读取，仍不代表全平台真实服务联调完成。详见 [本轮开发记录](docs/2026-09-12-continuation.md)。
 
 ## 交接范围
 
 提交包括当前源码、测试、迁移、配置示例与项目文档。依赖目录、构建产物、本地数据库、采集运行数据、日志和凭据不随仓库分发，需要在新环境重新安装或配置。
 
 各层状态与验收证据见项目 README 和 docs；本文提供恢复开发的入口，不代表本次发布重新完成生产环境验收。
+
+
+## M1 持久化更新
+
+本轮已新增 SQLAlchemy 持久入口与 SQL 迁移，分析/输入快照/缓存/处理状态成本/outbox 不再只能存内存。原 graph API 仍可独立运行；需要持久化时使用 `sql_store.SqlAlchemyEnrichmentStore` 和 `durable.process_content`。详见 [M1 记录](docs/2026-09-12-m1-persistence.md) 与 [平台七阶段检查](../codepick-docs/M1_INTEGRATION.md)。前文关于原默认路径的说明保留，但 L1 SQL 存储与实际 L2 读取已在本轮完成本地验证。

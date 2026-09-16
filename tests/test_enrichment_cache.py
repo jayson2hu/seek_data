@@ -53,3 +53,30 @@ def test_reprocess_bypasses_same_version_cache() -> None:
     assert cache.count() == 1
     assert second_llm.calls["structured"] > 0
     assert second_llm.calls["embed"] == 1
+
+
+def test_same_text_with_different_ids_keeps_outputs_on_each_content():
+    from dataclasses import replace
+
+    from l1_data_processing.events import InMemoryOutbox
+    from l1_data_processing.persistence import InMemoryContentBaseAnalysisRepository
+
+    class SameTextProvider:
+        def get(self, content_id):
+            return replace(StubContentProvider().get("demo-article"), content_id=content_id)
+
+    cache = InMemoryEnrichmentCache()
+    outbox = InMemoryOutbox()
+    repository = InMemoryContentBaseAnalysisRepository()
+    first = enrich("first", provider=SameTextProvider(), llm=FakeLLM(), cache=cache, outbox=outbox, repository=repository)
+    second_llm = FakeLLM()
+    second = enrich("second", provider=SameTextProvider(), llm=second_llm, cache=cache, outbox=outbox, repository=repository)
+
+    assert second.intermediate["cache"]["hit"] and not second_llm.calls
+    assert first.analysis.content_id == "first"
+    assert second.analysis.content_id == "second"
+    assert repository.count() == 2 and outbox.count() == 2 and cache.count() == 1
+    assert repository.get("second").analysis.content_id == "second"
+    assert outbox.get("content.analyzed:second").payload["analysis"]["content_id"] == "second"
+    second.analysis.key_points.append("change second only")
+    assert "change second only" not in first.analysis.key_points

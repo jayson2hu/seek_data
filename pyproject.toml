@@ -3,10 +3,11 @@ name = "l1-data-processing"
 version = "0.1.0"
 description = "Standalone L1 data processing service scaffold with stub content and fake LLM."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["sqlalchemy>=2.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+postgres = ["psycopg[binary]>=3.1"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -21,3 +22,6 @@ pythonpath = ["src"]
 markers = [
   "graph: deterministic graph and smoke tests",
 ]
+
+[tool.setuptools.package-data]
+"l1_data_processing.migrations" = ["*.sql"]

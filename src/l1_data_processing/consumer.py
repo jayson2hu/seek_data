@@ -30,8 +30,12 @@ def parse_content_ingested(event: OutboxEvent) -> ContentIngestedMessage:
         raise ValueError(f"unsupported topic: {event.topic}")
 
     content_id = event.payload.get("content_id")
-    if not isinstance(content_id, str) or not content_id.strip():
-        raise ValueError("content.ingested payload requires non-empty content_id")
+    # L0 emits positive integer database IDs; fixture IDs remain supported.
+    # bool is an int subclass and must not become content 1 or 0.
+    if type(content_id) is int and content_id > 0:
+        content_id = str(content_id)
+    elif not isinstance(content_id, str) or not content_id.strip():
+        raise ValueError("content.ingested payload requires a positive integer or non-empty string content_id")
 
     graph_version = event.payload.get("graph_version")
     if graph_version is not None and not isinstance(graph_version, str):
