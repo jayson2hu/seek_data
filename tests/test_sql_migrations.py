@@ -47,8 +47,10 @@ def test_migration_refuses_unmanaged_colliding_table(tmp_path):
 @pytest.mark.parametrize("dialect", [sqlite.dialect(), postgresql.dialect()], ids=["sqlite", "postgresql"])
 def test_packaged_sql_matches_the_dialect_schema(dialect):
     script = files("l1_data_processing.migrations").joinpath(f"0001_{dialect.name}.up.sql").read_text()
+    normalized_script = " ".join(script.split())
     for table in metadata.sorted_tables:
-        assert str(CreateTable(table).compile(dialect=dialect)).strip() in script
+        compiled_table = " ".join(str(CreateTable(table).compile(dialect=dialect)).split())
+        assert compiled_table in normalized_script
     assert "INSERT INTO l1_schema_migrations (version) VALUES (1)" in script
 
 
