@@ -27,7 +27,21 @@ GENERAL_TAGS = frozenset(
 )
 
 TAG_KEYWORDS = {
-    "ai": ("ai", "llm", "model", "人工智能", "模型"),
+    "ai": (
+        "ai ",
+        "ai-",
+        "artificial intelligence",
+        "generative ai",
+        "machine learning",
+        "llm",
+        "language model",
+        "ai model",
+        "ai agent",
+        "coding agent",
+        "copilot",
+        "人工智能",
+        "大模型",
+    ),
     "business": ("business", "market", "company", "商业", "公司", "市场"),
     "data": ("data", "dataset", "analytics", "数据", "分析"),
     "engineering": ("engineering", "software", "system", "工程", "软件", "系统"),

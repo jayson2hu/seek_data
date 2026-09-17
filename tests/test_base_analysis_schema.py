@@ -29,7 +29,6 @@ def test_validate_base_analysis_payload_normalizes_schema() -> None:
         ("one_liner", ""),
         ("summary", None),
         ("key_points", []),
-        ("entities", []),
         ("base_tags", "not-a-list"),
     ],
 )
@@ -39,6 +38,13 @@ def test_validate_base_analysis_payload_rejects_invalid_required_fields(field: s
 
     with pytest.raises(SchemaValidationError):
         validate_base_analysis_payload(payload)
+
+def test_validate_base_analysis_payload_allows_no_detected_entities() -> None:
+    payload = dict(VALID_PAYLOAD)
+    payload["entities"] = []
+
+    assert validate_base_analysis_payload(payload)["entities"] == []
+
 
 
 def test_build_base_analysis_requires_numeric_embedding() -> None:

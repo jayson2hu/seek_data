@@ -241,13 +241,21 @@ def aggregate_chunks_node(state: GraphState) -> GraphState:
 
     deduped_points = dedupe(key_points)
     deduped_summaries = dedupe([summary for summary in summaries if summary])
+    summary = " ".join(deduped_summaries[:4]).strip()
+    if len(summary) > 800:
+        summary = summary[:800].rsplit(" ", 1)[0].rstrip(" ,;:")
+    deduped_points = deduped_points[:5]
+    deduped_quotes = dedupe(quotes)[:3]
+    deduped_entities = dedupe(entities)[:20]
+    deduped_tags = dedupe(base_tags)[:10]
+
     state.intermediate["base_analysis"] = {
         "one_liner": deduped_points[0] if deduped_points else "Aggregated long-form analysis",
-        "summary": " ".join(deduped_summaries).strip() or "Aggregated long-form summary.",
+        "summary": summary or "Aggregated long-form summary.",
         "key_points": deduped_points,
-        "quotes": dedupe(quotes),
-        "entities": dedupe(entities),
-        "base_tags": dedupe(base_tags) or ["long-form"],
+        "quotes": deduped_quotes,
+        "entities": deduped_entities,
+        "base_tags": deduped_tags or ["long-form"],
     }
     state.status = "AGGREGATED"
     return state

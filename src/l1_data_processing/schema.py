@@ -38,7 +38,7 @@ def validate_base_analysis_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "summary": _non_empty_string(payload, "summary"),
         "key_points": _string_list(payload, "key_points"),
         "quotes": _string_list(payload, "quotes", allow_empty=True),
-        "entities": _string_list(payload, "entities"),
+        "entities": _string_list(payload, "entities", allow_empty=True),
         "base_tags": _string_list(payload, "base_tags"),
     }
 

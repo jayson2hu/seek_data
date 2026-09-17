@@ -46,3 +46,11 @@ worker 需要 `L0_DATABASE_URL`、`L0_OBJECT_STORE_PATH`、
 ## M1 持久化更新
 
 本轮已新增 SQLAlchemy 持久入口与 SQL 迁移，分析/输入快照/缓存/处理状态成本/outbox 不再只能存内存。原 graph API 仍可独立运行；需要持久化时使用 `sql_store.SqlAlchemyEnrichmentStore` 和 `durable.process_content`。详见 [M1 记录](docs/2026-09-12-m1-persistence.md) 与 [平台七阶段检查](../codepick-docs/M1_INTEGRATION.md)。前文关于原默认路径的说明保留，但 L1 SQL 存储与实际 L2 读取已在本轮完成本地验证。
+
+## 真实内容离线模式
+
+需要从相邻 L0 的真实 SQLite/对象目录生成 L1 快照时，使用
+`python -m l1_data_processing.real_preview`。该入口显式选择
+`extractive-v3`，不会调用付费模型；默认 FakeLLM smoke 和 worker 契约仍保留。
+命令、字段语义和 2026-09-17 实测见
+[真实公开内容离线抽取记录](docs/2026-09-17-extractive-public-preview.md)。

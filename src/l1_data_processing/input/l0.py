@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 class L0Source(Protocol):
     id: int | None
     name: str | None
+    kind: str | None
+    home_url: str | None
+    feed_url: str | None
+    etiquette: dict[str, object]
 
 
 class L0Content(Protocol):
@@ -26,6 +30,7 @@ class L0Content(Protocol):
     canonical_url: str
     published_at: datetime | None
     lang: str | None
+    fetched_at: datetime
     status: str
     source: L0Source
 
@@ -64,6 +69,12 @@ class L0ContentProvider:
             raise ValueError("L0 returned a different content_id")
         if not content.clean_text.strip():
             raise ValueError("L0 content has no clean_text; title-only TREND enrichment is not supported")
+        source_etiquette = getattr(content.source, "etiquette", {}) or {}
+        source_kind = source_etiquette.get("source_kind") or getattr(
+            content.source, "kind", None
+        )
+        fetched_at = getattr(content, "fetched_at", None)
+        source_feed_url = getattr(content.source, "feed_url", None)
         return ContentInput(
             content_id=content_id,
             title=content.title or "",
@@ -75,6 +86,21 @@ class L0ContentProvider:
                 "status": content.status,
                 "content_version": content.current_version,
                 "l0_content_hash": content.content_hash,
-                "source": {"id": content.source.id, "name": content.source.name},
+                "source_kind": source_kind,
+                "source": {
+                    "id": content.source.id,
+                    "name": content.source.name,
+                    "home_url": getattr(content.source, "home_url", None),
+                    "feed_url": source_feed_url,
+                },
+                "provenance": {
+                    "source_url": content.canonical_url,
+                    "feed_url": source_feed_url,
+                    "fetched_at": fetched_at.isoformat() if fetched_at else None,
+                    "published_at": content.published_at.isoformat()
+                    if content.published_at
+                    else None,
+                    "rights_policy": source_etiquette,
+                },
             },
         )

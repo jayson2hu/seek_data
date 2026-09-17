@@ -18,6 +18,12 @@ def test_general_tags_are_limited_to_controlled_vocabulary() -> None:
     assert set(tags) <= GENERAL_TAGS
 
 
+def test_general_model_language_does_not_imply_ai() -> None:
+    tags = infer_general_tags("SCIM identity data model for enterprise provisioning")
+
+    assert "ai" not in tags
+
+
 def test_normalize_general_tags_filters_vertical_specific_tags() -> None:
     assert normalize_general_tags(["finance", "insurance-claim", "technology"]) == ["finance", "technology"]
 

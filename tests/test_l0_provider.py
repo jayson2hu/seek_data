@@ -38,7 +38,20 @@ def test_maps_frozen_l0_query_contract_without_mutation():
         "status": "WAIT_FILTER",
         "content_version": 3,
         "l0_content_hash": "l0-hash",
-        "source": {"id": 7, "name": "Example feed"},
+        "source_kind": None,
+        "source": {
+            "id": 7,
+            "name": "Example feed",
+            "home_url": None,
+            "feed_url": None,
+        },
+        "provenance": {
+            "source_url": "https://example.test/article",
+            "feed_url": None,
+            "fetched_at": None,
+            "published_at": "2026-09-12T00:00:00+00:00",
+            "rights_policy": {},
+        },
     }
     assert original.status == "WAIT_FILTER"
 
